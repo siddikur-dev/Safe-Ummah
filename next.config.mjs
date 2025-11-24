@@ -2,7 +2,11 @@
 const nextConfig = {
   reactCompiler: true,
   images: {
-    domains: ['images.unsplash.com'], // External domain
+    domains: [
+      "images.unsplash.com",
+      "i.ibb.co",
+      "i.ibb.co.com"
+    ],
   },
 };
 
