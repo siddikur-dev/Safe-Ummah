@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import Image from "next/image";
+import Link from "next/link";
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -81,6 +82,13 @@ const Navbar = () => {
     }
   }, []);
 
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Add Appeal", href: "/add-appeal" },
+    { label: "Add Martyr", href: "/add-martyr" },
+    { label: "News", href: "/news" },
+  ];
+
   const handleLogin = () => {
     const userData = {
       name: "John Doe",
@@ -151,16 +159,15 @@ const Navbar = () => {
             ref={navItemsRef}
             className="hidden lg:flex items-center space-x-8"
           >
-            {["Home", "Add Moment", "Add Martyr", "News"].map((item) => (
-              <a
-                key={item}
-                href={`/${item.toLowerCase().replace(" ", "-")}`}
-                className="text-gray-700 hover:text-primary font-medium transition-colors duration-300"
-                onMouseEnter={(e) => navHoverAnimation(e.target, true)}
-                onMouseLeave={(e) => navHoverAnimation(e.target, false)}
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="py-2 px-3 rounded-lg text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                {item}
-              </a>
+                {item.label}
+              </Link>
             ))}
           </nav>
 
@@ -279,14 +286,18 @@ const Navbar = () => {
             <div className="flex flex-col px-4 py-2 space-y-2">
               {/* Navigation Links */}
               {["Home", "Add Moment", "Add Martyr", "News"].map((item) => (
-                <a
+                <Link
                   key={item}
-                  href={`/${item.toLowerCase().replace(" ", "-")}`}
+                  href={
+                    item === "Home"
+                      ? "/"
+                      : `/${item.toLowerCase().replace(/ /g, "-")}`
+                  }
                   className="py-2 px-3 rounded-lg text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item}
-                </a>
+                </Link>
               ))}
 
               {/* Auth Section - Mobile */}
