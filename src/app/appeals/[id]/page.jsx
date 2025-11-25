@@ -73,7 +73,7 @@ const AppealDetails = () => {
     );
   }, [appeal]);
 
-  const newLocal = (desc) => {
+  const getShortDescription = (desc) => {
     if (!desc) return "No description available.";
 
     const sentences = desc
@@ -82,10 +82,22 @@ const AppealDetails = () => {
     return sentences.slice(0, 2).join(". ") + ".";
   };
 
-  const getShortDescription = newLocal;
-
   const getEmergencyLevel = (level) => {
     return level || "critical";
+  };
+
+  // Safe image handling function
+  const getImageUrl = (image) => {
+    if (!image) {
+      return "/default-appeal-image.jpg";
+    }
+    
+    // Check if image is a valid URL or path
+    if (typeof image === 'string' && (image.startsWith('http') || image.startsWith('/'))) {
+      return image;
+    }
+    
+    return "/default-appeal-image.jpg";
   };
 
   // Show loading while checking authentication
@@ -191,11 +203,15 @@ const AppealDetails = () => {
       {/* Hero Section */}
       <div className="relative h-96 md:h-[500px] overflow-hidden">
         <Image
-          src={appeal.image || "/default-appeal-image.jpg"}
+          src={getImageUrl(appeal.image)}
           alt={appeal.appealTitle || "Appeal Image"}
           fill
           className="object-cover"
           priority
+          onError={(e) => {
+            // Fallback to default image if there's an error loading the image
+            e.target.src = "/default-appeal-image.jpg";
+          }}
         />
         <div className="absolute inset-0 bg-black/50"></div>
 
@@ -264,7 +280,7 @@ const AppealDetails = () => {
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                     <span className="text-2xl">💰</span>
                     <span className="text-2xl font-bold text-[#af002b]">
-                      ${appeal.targetAmount || 0}
+                      ${appeal.targetAmount?.toLocaleString() || 0}
                     </span>
                   </div>
                 </div>
@@ -280,7 +296,7 @@ const AppealDetails = () => {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm font-medium text-gray-600">
                   <span>Raised: $0</span>
-                  <span>Goal: ${appeal.targetAmount || 0}</span>
+                  <span>Goal: ${appeal.targetAmount?.toLocaleString() || 0}</span>
                 </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-4">
