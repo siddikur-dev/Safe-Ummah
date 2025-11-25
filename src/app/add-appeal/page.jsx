@@ -40,6 +40,12 @@ const AppealForm = () => {
   }, []);
 
   const addAppeal = async (data) => {
+    const defaultImage = "https://i.ibb.co/PNBT0Km/default-image.jpg";
+
+    // যদি ইউজার image না দেয় বা খালি থাকে
+    if (!data.image || data.image.trim() === "") {
+      data.image = defaultImage;
+    }
     console.log("Form Data:", data);
 
     // Form submission animation

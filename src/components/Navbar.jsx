@@ -136,7 +136,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="bg-base-100 shadow-md sticky top-0 z-50 border-b border-base-200">
+    <header className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
@@ -151,7 +151,7 @@ const Navbar = () => {
               height={48}
               className="rounded-xl shadow-sm"
             />
-            <h1 className="text-2xl font-bold ">Safe Ummah</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Safe Ummah</h1>
           </div>
 
           {/* Navigation Items - Desktop */}
@@ -163,7 +163,7 @@ const Navbar = () => {
               <Link
                 key={item.label}
                 href={item.href}
-                className="py-2 px-3 rounded-lg text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
+                className="py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-all duration-200 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {item.label}
@@ -177,7 +177,7 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center space-x-2 border border-base-200 rounded-2xl px-3 py-1 bg-base-200 hover:bg-base-100 transition-all duration-300"
+                  className="flex items-center space-x-2 border border-gray-200 rounded-2xl px-3 py-1 bg-gray-100 hover:bg-gray-50 transition-all duration-300"
                 >
                   <Image
                     src={user?.image}
@@ -186,7 +186,7 @@ const Navbar = () => {
                     height={36}
                     className="rounded-full"
                   />
-                  <span className="text-primary font-medium hidden xl:block">
+                  <span className="text-[#af002b] font-medium hidden xl:block">
                     {user?.name}
                   </span>
                   <svg
@@ -208,8 +208,8 @@ const Navbar = () => {
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                  <div className="user-dropdown absolute right-0 mt-2 w-56 bg-base-100 rounded-xl shadow-lg border border-base-200 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-base-200">
+                  <div className="user-dropdown absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200">
                       <p className="font-semibold text-gray-800">
                         {user?.name}
                       </p>
@@ -219,7 +219,7 @@ const Navbar = () => {
                       <a
                         key={item}
                         href={`/${item.toLowerCase()}`}
-                        className="block px-4 py-2 text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
+                        className="block px-4 py-2 text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-all duration-200"
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         {item}
@@ -227,7 +227,7 @@ const Navbar = () => {
                     ))}
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 transition-all duration-200"
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-all duration-200"
                     >
                       Logout
                     </button>
@@ -238,13 +238,13 @@ const Navbar = () => {
               <>
                 <button
                   onClick={handleLogin}
-                  className="px-6 py-2 rounded-2xl text-white bg-primary hover:bg-primary/90 transition-colors duration-300"
+                  className="px-6 py-2 rounded-2xl text-white bg-[#af002b] hover:bg-[#900023] transition-colors duration-300"
                 >
                   Login
                 </button>
                 <button
                   onClick={handleLogin}
-                  className="btn rounded-lg bg-[#af002b] text-white btn-outline transition-colors duration-300"
+                  className="px-6 py-2 rounded-lg bg-[#af002b] text-white border border-[#af002b] hover:bg-[#900023] transition-colors duration-300"
                 >
                   Register
                 </button>
@@ -254,7 +254,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 rounded-lg bg-base-200 hover:bg-base-100 transition-colors duration-300"
+            className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-300"
             onClick={toggleMobileMenu}
           >
             <svg
@@ -281,31 +281,27 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div
             ref={mobileMenuRef}
-            className="lg:hidden mt-2 bg-base-100 rounded-xl shadow-md border border-base-200 overflow-hidden"
+            className="lg:hidden mt-2 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden"
           >
             <div className="flex flex-col px-4 py-2 space-y-2">
               {/* Navigation Links */}
-              {["Home", "Add Moment", "Add Martyr", "News"].map((item) => (
+              {navItems.map((item) => (
                 <Link
-                  key={item}
-                  href={
-                    item === "Home"
-                      ? "/"
-                      : `/${item.toLowerCase().replace(/ /g, "-")}`
-                  }
-                  className="py-2 px-3 rounded-lg text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
+                  key={item.label}
+                  href={item.href}
+                  className="py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {item}
+                  {item.label}
                 </Link>
               ))}
 
               {/* Auth Section - Mobile */}
-              <div className="border-t border-base-200 pt-4 mt-2">
+              <div className="border-t border-gray-200 pt-4 mt-2">
                 {isLoggedIn ? (
                   <div className="space-y-2">
                     {/* User Info */}
-                    <div className="flex items-center space-x-3 px-3 py-2 bg-base-200 rounded-lg">
+                    <div className="flex items-center space-x-3 px-3 py-2 bg-gray-100 rounded-lg">
                       <Image
                         src={user?.image}
                         alt={user?.name}
@@ -326,7 +322,7 @@ const Navbar = () => {
                       <a
                         key={item}
                         href={`/${item.toLowerCase()}`}
-                        className="block py-2 px-3 rounded-lg text-gray-700 hover:text-primary hover:bg-base-200 transition-all duration-200"
+                        className="block py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-all duration-200"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         {item}
@@ -339,7 +335,7 @@ const Navbar = () => {
                         handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full text-left py-2 px-3 rounded-lg text-red-600 hover:bg-red-100 transition-all duration-200"
+                      className="w-full text-left py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-200"
                     >
                       Logout
                     </button>
@@ -351,7 +347,7 @@ const Navbar = () => {
                         handleLogin();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full py-2 px-3 rounded-lg text-white bg-primary hover:bg-primary/90 transition-colors duration-300 text-center"
+                      className="w-full py-2 px-3 rounded-lg text-white bg-[#af002b] hover:bg-[#900023] transition-colors duration-300 text-center"
                     >
                       Login
                     </button>
@@ -360,7 +356,7 @@ const Navbar = () => {
                         handleLogin();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full py-2 px-3 rounded-lg bg-[#af002b] text-white hover:bg-[#af002b]/90 transition-colors duration-300 text-center"
+                      className="w-full py-2 px-3 rounded-lg bg-[#af002b] text-white hover:bg-[#900023] transition-colors duration-300 text-center"
                     >
                       Register
                     </button>
