@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { useForm } from "react-hook-form";
 import gsap from "gsap";
 import Typewriter from "typewriter-effect";
@@ -123,8 +124,9 @@ const AppealForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-      <div ref={containerRef} className="max-w-2xl mx-auto">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+        <div ref={containerRef} className="max-w-2xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[#af002b]">
@@ -363,6 +365,7 @@ const AppealForm = () => {
         </div>
       </div>
     </div>
+  </ProtectedRoute>
   );
 };
 
