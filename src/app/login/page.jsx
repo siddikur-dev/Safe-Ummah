@@ -1,55 +1,151 @@
 // app/login/page.jsx
 'use client';
 
-import { signIn, useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { user, login, loading: authLoading } = useAuth();
 
-  console.log("🔍 Session status:", status);
-  console.log("🔍 Session data:", session);
+  console.log("🔍 Auth user:", user);
+  console.log("🔍 Auth loading:", authLoading);
 
-  // Redirect if already logged in
+  // Redirect if already logged in - শুধু যখন user আছে এবং authLoading false
   useEffect(() => {
-    if (session) {
-      console.log("✅ Already logged in, redirecting...");
+    if (!authLoading && user) {
+      console.log("✅ Already logged in, redirecting to home...");
       router.push('/');
     }
-  }, [session, router]);
+  }, [user, authLoading, router]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      setError('');
+      
+      console.log("🔐 Starting Google Sign-In...");
+
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+      
+      const idToken = await googleUser.getIdToken();
+
+      console.log("✅ Firebase Google Sign-In successful, sending to backend...");
+
+      const response = await fetch('http://localhost:5000/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("✅ Backend authentication successful:", data.user);
+        
+        // Update auth context - এইটা সবচেয়ে গুরুত্বপূর্ণ
+        login(data.user);
+        
+        // Store data in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token || idToken);
+        
+        console.log("🎉 Google Sign-In completed! User should see updated navbar.");
+        
+        // Small delay to ensure state is updated before redirect
+        setTimeout(() => {
+          router.push('/');
+        }, 500);
+        
+      } else {
+        console.error("❌ Backend error:", data.message);
+        setError(data.message || 'Google sign-in failed');
+      }
+
+    } catch (error) {
+      console.error('❌ Google Sign-In error:', error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in cancelled by user');
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('Popup blocked by browser. Please allow popups for this site.');
+      } else {
+        setError('Failed to sign in with Google. Please try again.');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    console.log("🔐 Login attempt:", { email });
+    console.log("🔐 Regular login attempt:", { email });
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          email,
+          password
+        }),
       });
 
-      console.log("🔍 SignIn result:", result);
+      const data = await response.json();
 
-      if (result?.error) {
-        console.error("❌ SignIn error:", result.error);
-        setError('Invalid email or password');
-      } else if (result?.ok) {
-        console.log("✅ Login successful, redirecting...");
-        router.push('/');
+      console.log("🔍 Login response:", data);
+
+      if (data.success) {
+        console.log("✅ Regular login successful:", data.user);
+        
+        // Update auth context
+        login(data.user);
+        
+        // Store user data
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          router.push('/');
+        }, 500);
+        
       } else {
-        console.error("❌ Unexpected result:", result);
-        setError('Login failed. Please try again.');
+        console.error("❌ Login error:", data.message);
+        setError(data.message || 'Invalid email or password');
       }
     } catch (error) {
       console.error("❌ Login error:", error);
@@ -59,18 +155,26 @@ export default function Login() {
     }
   };
 
-  if (status === "loading") {
+  // Show loading while checking authentication
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Checking authentication...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
       </div>
     );
   }
 
-  if (session) {
+  // Show redirect message if already logged in
+  if (user && !authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Redirecting...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Already logged in! Redirecting...</p>
+        </div>
       </div>
     );
   }
@@ -82,9 +186,6 @@ export default function Login() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Test credentials: demo@example.com / password
-          </p>
         </div>
         
         {error && (
@@ -94,28 +195,6 @@ export default function Login() {
         )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Google Sign In */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => signIn('google', { callbackUrl: '/' })}
-              className="w-full max-w-xs flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-100"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path fill="#4285f4" d="M533.5 278.4c0-18.5-1.6-36.3-4.6-53.4H272v101h147.4c-6.3 33.8-25.3 62.4-54 81.6v67.7h87.1c51.1-47 80-116.4 80-196.9z"/>
-                <path fill="#34a853" d="M272 544.3c73.6 0 135.4-24.3 180.6-66.1l-87.1-67.7c-24.2 16.3-55.3 25.9-93.5 25.9-71.9 0-132.9-48.6-154.8-114.1H28.6v71.6C73.9 485.8 166.6 544.3 272 544.3z"/>
-                <path fill="#fbbc04" d="M117.2 328.3c-10.8-32.6-10.8-67.7 0-100.3V156.4H28.6c-34.7 68.1-34.7 147.3 0 215.4l88.6-43.5z"/>
-                <path fill="#ea4335" d="M272 107.7c39.9 0 75.8 13.7 104.1 40.6l78-78C403.8 24.3 341.9 0 272 0 166.6 0 73.9 58.5 28.6 156.4l88.6 71.6C139.1 156.3 200.1 107.7 272 107.7z"/>
-              </svg>
-              <span className="text-sm font-medium">Continue with Google</span>
-            </button>
-          </div>
-
-          <div className="relative flex items-center justify-center">
-            <span className="h-px w-1/3 bg-gray-200"></span>
-            <span className="px-2 text-sm text-gray-400">or</span>
-            <span className="h-px w-1/3 bg-gray-200"></span>
-          </div>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -173,13 +252,38 @@ export default function Login() {
             </Link>
           </div>
 
-          {/* Test Credentials */}
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-            <p className="text-sm text-gray-600 text-center">
-              <strong>Test Credentials:</strong><br />
-              Email: demo@example.com<br />
-              Password: password
-            </p>
+          {/* Divider */}
+          <div className="relative flex items-center justify-center">
+            <span className="h-px w-1/3 bg-gray-200"></span>
+            <span className="px-2 text-sm text-gray-400">or</span>
+            <span className="h-px w-1/3 bg-gray-200"></span>
+          </div>
+
+          {/* Google Sign In Button */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {googleLoading ? (
+                <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <path fill="#4285f4" d="M533.5 278.4c0-18.5-1.6-36.3-4.6-53.4H272v101h147.4c-6.3 33.8-25.3 62.4-54 81.6v67.7h87.1c51.1-47 80-116.4 80-196.9z"/>
+                  <path fill="#34a853" d="M272 544.3c73.6 0 135.4-24.3 180.6-66.1l-87.1-67.7c-24.2 16.3-55.3 25.9-93.5 25.9-71.9 0-132.9-48.6-154.8-114.1H28.6v71.6C73.9 485.8 166.6 544.3 272 544.3z"/>
+                  <path fill="#fbbc04" d="M117.2 328.3c-10.8-32.6-10.8-67.7 0-100.3V156.4H28.6c-34.7 68.1-34.7 147.3 0 215.4l88.6-43.5z"/>
+                  <path fill="#ea4335" d="M272 107.7c39.9 0 75.8 13.7 104.1 40.6l78-78C403.8 24.3 341.9 0 272 0 166.6 0 73.9 58.5 28.6 156.4l88.6 71.6C139.1 156.3 200.1 107.7 272 107.7z"/>
+                </svg>
+              )}
+              <span className="text-sm font-medium text-gray-700">
+                {googleLoading ? "Signing in..." : "Continue with Google"}
+              </span>
+            </button>
           </div>
         </form>
       </div>

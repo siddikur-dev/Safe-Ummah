@@ -1,18 +1,18 @@
 "use client";
 import React, { useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from "react-hook-form";
 import gsap from "gsap";
 import Typewriter from "typewriter-effect";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { useRouter } from 'next/navigation';
 
 const AppealForm = () => {
   const formRef = useRef(null);
   const containerRef = useRef(null);
-
-  const { data: session } = useSession();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const {
     register,
@@ -43,13 +43,23 @@ const AppealForm = () => {
     );
   }, []);
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!user) {
+      console.log("❌ User not authenticated, redirecting to login...");
+      router.push('/login');
+    }
+  }, [user, router]);
+
   const addAppeal = async (data) => {
     const defaultImage = "https://i.ibb.co/PNBT0Km/default-image.jpg";
 
     if (!data.image || data.image.trim() === "") {
       data.image = defaultImage;
     }
-    console.log("Form Data:", data);
+
+    console.log("🔍 Form Data:", data);
+    console.log("🔍 Current User:", user);
 
     // Form submission animation
     gsap.to(formRef.current, {
@@ -59,15 +69,22 @@ const AppealForm = () => {
     });
 
     try {
-      // Send form data to API
-      // attach logged-in user's id/email so backend can associate the appeal
-      if (session && session.user) {
-        data.userId = session.user.id;
-        data.userEmail = session.user.email;
+      // Attach logged-in user's information
+      if (user) {
+        data.userId = user.id || user._id;
+        data.userEmail = user.email;
+        data.creatorName = user.name;
+        console.log("✅ Added user data to appeal:", { 
+          userId: data.userId, 
+          userEmail: data.userEmail,
+          creatorName: data.creatorName 
+        });
+      } else {
+        throw new Error("User not authenticated");
       }
 
       const res = await axios.post("http://localhost:5000/api/appeals", data);
-      console.log("API Response:", res.data);
+      console.log("✅ API Response:", res.data);
 
       // Success animation
       gsap.to(formRef.current, {
@@ -93,11 +110,16 @@ const AppealForm = () => {
         hideClass: {
           popup: "animate__animated animate__fadeOutUp",
         },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          reset();
+          // Redirect to dashboard after successful creation
+          router.push('/dashboard');
+        }
       });
 
-      reset();
     } catch (error) {
-      console.error("Error creating appeal:", error);
+      console.error("❌ Error creating appeal:", error);
 
       // Error animation
       gsap.to(formRef.current, {
@@ -108,7 +130,7 @@ const AppealForm = () => {
 
       Swal.fire({
         title: "Error!",
-        text: "Failed to create appeal. Please try again.",
+        text: error.response?.data?.message || "Failed to create appeal. Please try again.",
         icon: "error",
         confirmButtonColor: "#af002b",
       });
@@ -123,10 +145,21 @@ const AppealForm = () => {
     });
   };
 
+  // Show loading while checking authentication
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-        <div ref={containerRef} className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+      <div ref={containerRef} className="max-w-2xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[#af002b]">
@@ -149,18 +182,25 @@ const AppealForm = () => {
             Help those in need by creating a new emergency appeal. Fill out the
             form below to get started.
           </p>
+          
+          {/* User Info */}
+          <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200 max-w-md mx-auto">
+            <p className="text-sm text-gray-600">
+              <strong>Creating appeal as:</strong> {user.name || user.email}
+            </p>
+          </div>
         </div>
 
         {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
           <form
-            // ref={formRef}
+            ref={formRef}
             onSubmit={handleSubmit(addAppeal)}
             className="space-y-6"
           >
             {/* Appeal Title */}
             <div>
-              <label className="block  font-semibold text-gray-800 mb-3">
+              <label className="block font-semibold text-gray-800 mb-3">
                 Appeal Title
               </label>
               <input
@@ -172,7 +212,7 @@ const AppealForm = () => {
                     message: "Title must be at least 5 characters",
                   },
                 })}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
                 placeholder="Enter appeal title"
                 onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                 onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
@@ -186,7 +226,7 @@ const AppealForm = () => {
 
             {/* Description */}
             <div>
-              <label className="block  font-semibold text-gray-800 mb-3">
+              <label className="block font-semibold text-gray-800 mb-3">
                 Description
               </label>
               <textarea
@@ -198,7 +238,7 @@ const AppealForm = () => {
                   },
                 })}
                 rows="5"
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300  resize-vertical"
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 resize-vertical"
                 placeholder="Describe the emergency situation in detail..."
                 onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                 onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
@@ -214,7 +254,7 @@ const AppealForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Target Amount */}
               <div>
-                <label className="block  font-semibold text-gray-800 mb-3">
+                <label className="block font-semibold text-gray-800 mb-3">
                   Target Amount (USD) *
                 </label>
                 <input
@@ -226,7 +266,7 @@ const AppealForm = () => {
                       message: "Minimum target amount is $100",
                     },
                   })}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
                   placeholder="Enter target amount"
                   onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                   onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
@@ -240,14 +280,14 @@ const AppealForm = () => {
 
               {/* Emergency Level */}
               <div>
-                <label className="block  font-semibold text-gray-800 mb-3">
+                <label className="block font-semibold text-gray-800 mb-3">
                   Emergency Level *
                 </label>
                 <select
                   {...register("emergencyLevel", {
                     required: "Emergency level is required",
                   })}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300  bg-white"
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 bg-white"
                   onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                   onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
                 >
@@ -267,7 +307,7 @@ const AppealForm = () => {
 
             {/* Location */}
             <div>
-              <label className="block  font-semibold text-gray-800 mb-3">
+              <label className="block font-semibold text-gray-800 mb-3">
                 Location *
               </label>
               <input
@@ -275,7 +315,7 @@ const AppealForm = () => {
                 {...register("location", {
                   required: "Location is required",
                 })}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
                 placeholder="Enter location (city, country)"
                 onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                 onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
@@ -286,32 +326,29 @@ const AppealForm = () => {
                 </p>
               )}
             </div>
+
             {/* Image */}
             <div>
-              <label className="block  font-semibold text-gray-800 mb-3">
+              <label className="block font-semibold text-gray-800 mb-3">
                 Image Link
               </label>
               <input
-                type="image link"
-                {...register("image", {
-                  required: "Image is required",
-                })}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
-                placeholder="Enter image link "
+                type="url"
+                {...register("image")}
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
+                placeholder="Enter image URL (optional)"
                 onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                 onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
               />
-              {errors.location && (
-                <p className="text-red-500 text-sm mt-2 font-medium">
-                  {errors.location.message}
-                </p>
-              )}
+              <p className="text-sm text-gray-500 mt-1">
+                Leave empty to use default image
+              </p>
             </div>
 
             {/* Contact Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block  font-semibold text-gray-800 mb-3">
+                <label className="block font-semibold text-gray-800 mb-3">
                   Contact Email *
                 </label>
                 <input
@@ -323,8 +360,9 @@ const AppealForm = () => {
                       message: "Invalid email address",
                     },
                   })}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
                   placeholder="Enter contact email"
+                  defaultValue={user.email} // Pre-fill with user's email
                   onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                   onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
                 />
@@ -336,13 +374,13 @@ const AppealForm = () => {
               </div>
 
               <div>
-                <label className="block  font-semibold text-gray-800 mb-3">
+                <label className="block font-semibold text-gray-800 mb-3">
                   Phone Number
                 </label>
                 <input
                   type="tel"
                   {...register("phone")}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300 "
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#af002b] focus:border-transparent transition-all duration-300"
                   placeholder="Enter phone number"
                   onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                   onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
@@ -354,7 +392,7 @@ const AppealForm = () => {
             <div className="pt-6">
               <button
                 type="submit"
-                className="w-full bg-[#af002b] text-white py-4 px-8 rounded-xl font-bold  hover:bg-[#900023] transition-all duration-300 transform hover:scale-105 shadow-lg"
+                className="w-full bg-[#af002b] text-white py-4 px-8 rounded-xl font-bold hover:bg-[#900023] transition-all duration-300 transform hover:scale-105 shadow-lg"
                 onMouseEnter={(e) => inputHoverAnimation(e.target, true)}
                 onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
               >
@@ -365,7 +403,6 @@ const AppealForm = () => {
         </div>
       </div>
     </div>
-  </ProtectedRoute>
   );
 };
 

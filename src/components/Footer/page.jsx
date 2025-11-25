@@ -1,10 +1,19 @@
+import Image from "next/image";
+
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-8">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row justify-between items-center gap-6">
-        {/* Logo / Branding */}
-        <div className="text-lg font-bold">Palestine Aid</div>
-
+      <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row justify-between items-center gap-6 text-white">
+        <div>
+          {/* Logo / Branding */}
+          <Image
+            src="/ummah-logo.png"
+            alt="Safe Ummah Logo"
+            width={100}
+            height={50}
+          />
+          <h1 className="text-2xl font-bold text-gray-800">Safe Ummah</h1>
+        </div>
         {/* Navigation Links */}
         <div className="flex flex-col sm:flex-row gap-4 text-sm md:text-base">
           <a

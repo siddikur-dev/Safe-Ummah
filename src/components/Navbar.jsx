@@ -3,15 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+
+  const handleLogout = () => {
+    logout();
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    router.push('/');
+  };
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -48,12 +57,12 @@ const Navbar = () => {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12  rounded-xl flex items-center justify-center font-bold text-lg">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg">
               <Image
                 src="/ummah-logo.png"
                 alt="Safe Ummah Logo"
-                width={100} // Specify the width of the image in pixels
-                height={50} // Specify the height of the image in pixels
+                width={100}
+                height={50}
               />
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Safe Ummah</h1>
@@ -128,17 +137,25 @@ const Navbar = () => {
 
           {/* Auth Section - Desktop */}
           <div className="hidden lg:flex items-center space-x-4">
-            {session ? (
+            {user ? (
               <div className="relative">
                 <button
                   onClick={toggleDropdown}
                   className="flex items-center space-x-2 border border-gray-200 rounded-2xl px-3 py-1 bg-gray-100 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                    {session.user?.name?.charAt(0) || "U"}
-                  </div>
+                  {user.image ? (
+                    <img 
+                      src={user.image} 
+                      alt={user.name} 
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
+                      {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                  )}
                   <span className="text-[#af002b] font-medium">
-                    {session.user?.name || session.user?.email}
+                    {user.name || user.email}
                   </span>
                   <svg
                     className={`w-4 h-4 text-gray-500 transition-transform ${
@@ -174,7 +191,7 @@ const Navbar = () => {
                       Dashboard
                     </Link>
                     <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
+                      onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Logout
@@ -183,13 +200,20 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              // ✅ FIXED: Changed href from "/api/auth/login" to "/login"
-              <Link
-                href="/login"
-                className="px-6 py-2 rounded-lg bg-[#af002b] text-white border border-[#af002b] hover:bg-[#900023] transition-colors"
-              >
-                Login
-              </Link>
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/login"
+                  className="text-gray-700 hover:text-[#af002b] font-medium transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className="px-6 py-2 rounded-lg bg-[#af002b] text-white border border-[#af002b] hover:bg-[#900023] transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
             )}
           </div>
 
@@ -282,18 +306,26 @@ const Navbar = () => {
               )}
 
               <div className="border-t border-gray-200 pt-4 mt-2">
-                {session ? (
+                {user ? (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-3 px-3 py-2 bg-gray-100 rounded-lg">
-                      <div className="w-10 h-10 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                        {session.user?.name?.charAt(0) || "U"}
-                      </div>
+                      {user.image ? (
+                        <img 
+                          src={user.image} 
+                          alt={user.name} 
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
+                          {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800">
-                          {session.user?.name || "User"}
+                          {user.name || "User"}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {session.user?.email}
+                          {user.email}
                         </p>
                       </div>
                     </div>
@@ -315,21 +347,29 @@ const Navbar = () => {
                     </Link>
 
                     <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
+                      onClick={handleLogout}
                       className="w-full text-left py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Logout
                     </button>
                   </div>
                 ) : (
-                  // ✅ FIXED: Changed href from "/api/auth/login" to "/login"
-                  <Link
-                    href="/login"
-                    className="w-full py-2 px-3 rounded-lg text-white bg-[#af002b] hover:bg-[#900023] text-center transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
+                  <div className="space-y-2">
+                    <Link
+                      href="/login"
+                      className="w-full py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 text-center transition-colors block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="w-full py-2 px-3 rounded-lg text-white bg-[#af002b] hover:bg-[#900023] text-center transition-colors block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
