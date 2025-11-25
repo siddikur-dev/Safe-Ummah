@@ -85,7 +85,6 @@ const FeatureInfinityReward = () => {
               }}
             />
           </span>
-          <br />
           Invest in your Akhira
         </h1>
       </div>

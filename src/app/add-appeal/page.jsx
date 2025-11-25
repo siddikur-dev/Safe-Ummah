@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import gsap from "gsap";
 import Typewriter from "typewriter-effect";
@@ -9,6 +10,8 @@ import axios from "axios";
 const AppealForm = () => {
   const formRef = useRef(null);
   const containerRef = useRef(null);
+
+  const { data: session } = useSession();
 
   const {
     register,
@@ -56,7 +59,13 @@ const AppealForm = () => {
 
     try {
       // Send form data to API
-      const res = await axios.post("http://localhost:5000/appeals", data);
+      // attach logged-in user's id/email so backend can associate the appeal
+      if (session && session.user) {
+        data.userId = session.user.id;
+        data.userEmail = session.user.email;
+      }
+
+      const res = await axios.post("http://localhost:5000/api/appeals", data);
       console.log("API Response:", res.data);
 
       // Success animation

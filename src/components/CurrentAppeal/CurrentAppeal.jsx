@@ -18,7 +18,7 @@ const CurrentAppeal = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://localhost:5000/appeals");
+        const res = await fetch("http://localhost:5000/api/appeals");
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -31,7 +31,7 @@ const CurrentAppeal = () => {
 
         const validImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
-        const campaignsWithImage = result.map((item) => {
+        const campaignsWithImage = result.appeals.map((item) => {
           const img = item.image?.trim() || "";
 
           // Check if image ends with an allowed extension

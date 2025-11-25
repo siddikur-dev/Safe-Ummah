@@ -6,25 +6,47 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import gsap from "gsap";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const AppealDetails = () => {
   const params = useParams();
   const appealId = params.id;
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   const containerRef = useRef(null);
   const contentRef = useRef(null);
 
-  // Fetch appeal details
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+  }, [session, status, router]);
+
+  // Fetch appeal details - only if authenticated
   const {
-    data: appeal,
+    data: appeal = [],
     isLoading,
     error,
   } = useQuery({
     queryKey: ["appeal", appealId],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:5000/appeals/${appealId}`);
-      return res.data;
+      // Check if user is authenticated before making the request
+      if (!session) {
+        throw new Error("User not authenticated");
+      }
+
+      const res = await axios.get(
+        `http://localhost:5000/api/appeals/${appealId}`
+      );
+      return res.data.appeal;
     },
+    enabled: !!session, // Only fetch if user is authenticated
   });
 
   // GSAP Animations
@@ -51,10 +73,45 @@ const AppealDetails = () => {
     );
   }, [appeal]);
 
+  const newLocal = (desc) => {
+    if (!desc) return "No description available.";
+
+    const sentences = desc
+      .split(".")
+      .filter((sentence) => sentence.trim().length > 0);
+    return sentences.slice(0, 2).join(". ") + ".";
+  };
+
+  const getShortDescription = newLocal;
+
+  const getEmergencyLevel = (level) => {
+    return level || "critical";
+  };
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!session) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#af002b]"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading appeal details...</p>
+        </div>
       </div>
     );
   }
@@ -64,9 +121,23 @@ const AppealDetails = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
-            Error Loading Appeal
+            {error.message === "User not authenticated"
+              ? "Authentication Required"
+              : "Error Loading Appeal"}
           </h2>
-          <p className="text-gray-600">{error.message}</p>
+          <p className="text-gray-600 mb-4">
+            {error.message === "User not authenticated"
+              ? "Please log in to view appeal details."
+              : error.message}
+          </p>
+          {error.message === "User not authenticated" && (
+            <button
+              onClick={() => router.push("/login")}
+              className="bg-[#af002b] text-white px-6 py-2 rounded-lg hover:bg-[#900023] transition-colors"
+            >
+              Go to Login
+            </button>
+          )}
         </div>
       </div>
     );
@@ -79,6 +150,12 @@ const AppealDetails = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Appeal Not Found
           </h2>
+          <button
+            onClick={() => router.push("/appeals")}
+            className="bg-[#af002b] text-white px-6 py-2 rounded-lg hover:bg-[#900023] transition-colors"
+          >
+            Back to Appeals
+          </button>
         </div>
       </div>
     );
@@ -93,11 +170,29 @@ const AppealDetails = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-gray-50">
+      {/* User Info Bar */}
+      <div className="bg-white border-b border-gray-200 py-2 px-4">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Logged in as:</span>
+            <span className="font-semibold text-[#af002b]">
+              {session.user?.name || session.user?.email}
+            </span>
+          </div>
+          <button
+            onClick={() => router.push("/appeals")}
+            className="text-sm text-gray-600 hover:text-[#af002b] transition-colors"
+          >
+            ← Back to Appeals
+          </button>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="relative h-96 md:h-[500px] overflow-hidden">
         <Image
-          src={appeal.image}
-          alt={appeal.appealTitle}
+          src={appeal.image || "/default-appeal-image.jpg"}
+          alt={appeal.appealTitle || "Appeal Image"}
           fill
           className="object-cover"
           priority
@@ -108,11 +203,10 @@ const AppealDetails = () => {
         <div className="absolute top-6 left-6">
           <span
             className={`inline-flex items-center px-4 py-2 rounded-full border-2 font-bold text-sm ${
-              emergencyLevelColors[appeal.emergencyLevel] ||
-              emergencyLevelColors.critical
+              emergencyLevelColors[getEmergencyLevel(appeal.emergencyLevel)]
             }`}
           >
-            {appeal.emergencyLevel?.toUpperCase()} PRIORITY
+            {getEmergencyLevel(appeal.emergencyLevel)?.toUpperCase()} PRIORITY
           </span>
         </div>
 
@@ -120,10 +214,10 @@ const AppealDetails = () => {
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="max-w-6xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              {appeal.appealTitle}
+              {appeal.appealTitle || "Untitled Appeal"}
             </h1>
             <p className="text-xl md:text-2xl opacity-90 max-w-3xl">
-              {appeal.description.split(".").slice(0, 2).join(".")}.
+              {getShortDescription(appeal.description)}
             </p>
           </div>
         </div>
@@ -140,7 +234,7 @@ const AppealDetails = () => {
                 Appeal Description
               </h2>
               <p className="text-gray-700 leading-relaxed text-lg">
-                {appeal.description}
+                {appeal.description || "No description provided."}
               </p>
             </div>
 
@@ -158,7 +252,7 @@ const AppealDetails = () => {
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                     <span className="text-2xl">📍</span>
                     <span className="text-gray-700 font-medium">
-                      {appeal.location}
+                      {appeal.location || "Location not specified"}
                     </span>
                   </div>
                 </div>
@@ -170,7 +264,7 @@ const AppealDetails = () => {
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                     <span className="text-2xl">💰</span>
                     <span className="text-2xl font-bold text-[#af002b]">
-                      ${appeal.targetAmount}
+                      ${appeal.targetAmount || 0}
                     </span>
                   </div>
                 </div>
@@ -186,7 +280,7 @@ const AppealDetails = () => {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm font-medium text-gray-600">
                   <span>Raised: $0</span>
-                  <span>Goal: ${appeal.targetAmount}</span>
+                  <span>Goal: ${appeal.targetAmount || 0}</span>
                 </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-4">
@@ -245,7 +339,9 @@ const AppealDetails = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-400">📧</span>
-                  <span className="text-gray-700">{appeal.contactEmail}</span>
+                  <span className="text-gray-700">
+                    {appeal.contactEmail || "No email provided"}
+                  </span>
                 </div>
 
                 {appeal.phone && (
@@ -257,7 +353,9 @@ const AppealDetails = () => {
 
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-400">📍</span>
-                  <span className="text-gray-700">{appeal.location}</span>
+                  <span className="text-gray-700">
+                    {appeal.location || "Location not specified"}
+                  </span>
                 </div>
               </div>
             </div>
