@@ -2,50 +2,43 @@ import React from "react";
 
 const HeroSection = () => {
   return (
-    <section className="relative py-16 px-4 min-h-[500px] flex items-center">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url(/download.jpg)`,
-          }}
-        >
-          {/* Overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/50"></div>
-        </div>
-      </div>
+    <section
+      className="relative w-full bg-cover bg-center bg-no-repeat min-h-[500px]"
+      style={{ backgroundImage: `url('/download.jpg')` }}
+    >
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 to-transparent"></div>
 
-      <div className="max-w-6xl mx-auto text-center relative z-10 w-full">
-        {/* Main Heading */}
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+      <div className="relative max-w-7xl mx-auto py-24 px-6 md:px-10 flex flex-col items-center text-center">
+        {/* Heading */}
+        <h1 className="text-white text-4xl md:text-5xl font-extrabold mb-4">
           PALESTINE EMERGENCY APPEAL
         </h1>
 
-        {/* Description Text */}
-        <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-4xl mx-auto leading-relaxed">
+        {/* Description */}
+        <p className="text-white/90 mb-6 text-sm md:text-base max-w-xl">
           Families in Palestine need urgent help. Your support can provide food,
-          shelter, and medical aid.
+          shelter, and medical aid. Every contribution counts.
         </p>
 
-        {/* CTA Section */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6">
-          <p className="text-white text-lg md:text-xl font-semibold">
-            Donate Now. Save Lives.
-          </p>
-          <button className="bg-white text-red-700 px-8 py-4 rounded-lg font-bold text-lg md:text-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-200 shadow-md">
             DONATE NOW
+          </button>
+          <button className="bg-white hover:bg-gray-100 text-red-700 px-6 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-200 shadow-md">
+            LEARN MORE
           </button>
         </div>
 
         {/* Urgent Badge */}
-        <div className="mt-8 inline-block bg-yellow-500 text-red-900 px-6 py-2 rounded-full font-bold text-sm md:text-base animate-pulse">
+        <div className="mt-6 inline-block bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-red-900 px-4 py-1 rounded-full font-bold text-xs md:text-sm animate-pulse">
           URGENT APPEAL
         </div>
       </div>
 
-      {/* Bottom Border */}
-      <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 to-red-500"></div>
+      {/* Optional Bottom Border */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-red-400"></div>
     </section>
   );
 };
