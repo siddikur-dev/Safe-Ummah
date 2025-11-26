@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useRef } from "react";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from "@/contexts/AuthContext";
 import { useForm } from "react-hook-form";
 import gsap from "gsap";
 import Typewriter from "typewriter-effect";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 const AppealForm = () => {
   const formRef = useRef(null);
@@ -47,12 +47,12 @@ const AppealForm = () => {
   useEffect(() => {
     if (!user) {
       console.log("❌ User not authenticated, redirecting to login...");
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, router]);
 
   const addAppeal = async (data) => {
-    const defaultImage = "https://i.ibb.co/PNBT0Km/default-image.jpg";
+    const defaultImage = "https://i.ibb.co.com/6cjKt45f/Whats-App-Image-2023-08-06-at-09-20-58.jpg";
 
     if (!data.image || data.image.trim() === "") {
       data.image = defaultImage;
@@ -74,10 +74,10 @@ const AppealForm = () => {
         data.userId = user.id || user._id;
         data.userEmail = user.email;
         data.creatorName = user.name;
-        console.log("✅ Added user data to appeal:", { 
-          userId: data.userId, 
+        console.log("✅ Added user data to appeal:", {
+          userId: data.userId,
           userEmail: data.userEmail,
-          creatorName: data.creatorName 
+          creatorName: data.creatorName,
         });
       } else {
         throw new Error("User not authenticated");
@@ -114,10 +114,9 @@ const AppealForm = () => {
         if (result.isConfirmed) {
           reset();
           // Redirect to dashboard after successful creation
-          router.push('/dashboard');
+          router.push("/dashboard");
         }
       });
-
     } catch (error) {
       console.error("❌ Error creating appeal:", error);
 
@@ -130,7 +129,9 @@ const AppealForm = () => {
 
       Swal.fire({
         title: "Error!",
-        text: error.response?.data?.message || "Failed to create appeal. Please try again.",
+        text:
+          error.response?.data?.message ||
+          "Failed to create appeal. Please try again.",
         icon: "error",
         confirmButtonColor: "#af002b",
       });
@@ -182,7 +183,7 @@ const AppealForm = () => {
             Help those in need by creating a new emergency appeal. Fill out the
             form below to get started.
           </p>
-          
+
           {/* User Info */}
           <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200 max-w-md mx-auto">
             <p className="text-sm text-gray-600">
@@ -292,9 +293,9 @@ const AppealForm = () => {
                   onMouseLeave={(e) => inputHoverAnimation(e.target, false)}
                 >
                   <option value="">Select emergency level</option>
-                  <option value="low">Low Priority</option>
+                  <option value="low"> Low Priority</option>
                   <option value="medium">Medium Priority</option>
-                  <option value="high">High Priority</option>
+                  <option value="high"> High Priority</option>
                   <option value="critical">Critical Emergency</option>
                 </select>
                 {errors.emergencyLevel && (

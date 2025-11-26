@@ -2,9 +2,32 @@
 const nextConfig = {
   images: {
     domains: [
-      "images.unsplash.com",
-      "i.ibb.co",
-      "i.ibb.co.com"
+      'imgbb.com', 
+      'i.ibb.co',
+      'www.pik.in',
+      'pik.in'
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'imgbb.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.pik.in',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pik.in',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
 };

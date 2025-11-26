@@ -27,7 +27,7 @@ const CurrentAppeal = () => {
         const result = await res.json();
 
         // Default fallback image
-        const defaultImage = "https://i.ibb.co/PNBT0Km/default-image.jpg";
+        const defaultImage = "https://i.ibb.co/PNBT0Km/default-image.jpghttps://i.ibb.co.com/6cjKt45f/Whats-App-Image-2023-08-06-at-09-20-58.jpg";
 
         const validImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
@@ -165,7 +165,7 @@ const CurrentAppeal = () => {
                   height={400}
                   onError={(e) =>
                     (e.target.src =
-                      "https://i.ibb.co/PNBT0Km/default-image.jpg")
+                      "https://i.ibb.co.com/6cjKt45f/Whats-App-Image-2023-08-06-at-09-20-58.jpg")
                   }
                 />
               </div>

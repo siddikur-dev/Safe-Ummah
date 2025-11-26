@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -19,13 +19,13 @@ const Navbar = () => {
     logout();
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    router.push('/');
+    router.push("/");
   };
 
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Add Appeal", href: "/add-appeal" },
-    { label: "News", href: "/news" },
+    { label: "All Appeal", href: "/appeals" },
     { label: "About", href: "/about" },
   ];
 
@@ -144,14 +144,16 @@ const Navbar = () => {
                   className="flex items-center space-x-2 border border-gray-200 rounded-2xl px-3 py-1 bg-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {user.image ? (
-                    <img 
-                      src={user.image} 
-                      alt={user.name} 
+                    <img
+                      src={user.image}
+                      alt={user.name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-8 h-8 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                      {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
+                      {user.name?.charAt(0)?.toUpperCase() ||
+                        user.email?.charAt(0)?.toUpperCase() ||
+                        "U"}
                     </div>
                   )}
                   <span className="text-[#af002b] font-medium">
@@ -284,11 +286,11 @@ const Navbar = () => {
                           </div>
                         ))}
                         <Link
-                          href="/news"
+                          href="/appeals"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="block text-sm text-[#af002b] mt-1"
                         >
-                          See all news →
+                          All Appeals
                         </Link>
                       </div>
                     )}
@@ -310,23 +312,23 @@ const Navbar = () => {
                   <div className="space-y-2">
                     <div className="flex items-center space-x-3 px-3 py-2 bg-gray-100 rounded-lg">
                       {user.image ? (
-                        <img 
-                          src={user.image} 
-                          alt={user.name} 
+                        <img
+                          src={user.image}
+                          alt={user.name}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-10 h-10 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                          {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
+                          {user.name?.charAt(0)?.toUpperCase() ||
+                            user.email?.charAt(0)?.toUpperCase() ||
+                            "U"}
                         </div>
                       )}
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800">
                           {user.name || "User"}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {user.email}
-                        </p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
                     </div>
 
