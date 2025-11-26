@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Poppins } from 'next/font/google';
+
+const poppins = Poppins({ weight: ['600','700'], subsets: ['latin'], display: 'swap' });
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,7 +68,7 @@ const Navbar = () => {
                 height={50}
               />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Safe Ummah</h1>
+            <h2 className={`${poppins.className} text-2xl font-bold text-gray-800`}>Safe Ummah</h2>
           </Link>
 
           {/* Desktop Nav */}
@@ -237,7 +240,7 @@ const Navbar = () => {
                 d={
                   isMobileMenuOpen
                     ? "M6 18L18 6M6 6l12 12"
-                    : "M4 6h16M4 12h16M4 18h16"
+                    : "M4 6h26M4 12h26M4 18h26"
                 }
               />
             </svg>

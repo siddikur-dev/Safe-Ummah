@@ -332,6 +332,7 @@ const AppealListPage = () => {
 
               return (
                 <div
+                  data-aos="fade-up-right"
                   key={appeal._id || appeal.id}
                   className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
                 >

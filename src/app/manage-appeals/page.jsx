@@ -3,6 +3,7 @@
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Button from '@/components/ui/Button';
 import { useSession } from "next-auth/react";
 
 export default function ManageAppealsPage() {
@@ -17,7 +18,7 @@ export default function ManageAppealsPage() {
         setLoading(true);
         setError(null);
 
-        console.log("Session:", session); // Debugging এর জন্য
+        console.log("Session:", session);
 
         // Check if user is authenticated
         if (!session?.user) {
@@ -26,7 +27,7 @@ export default function ManageAppealsPage() {
           return;
         }
 
-        // Get user email from session - NextAuth usually has email
+        // Get user email from session
         const userEmail = session.user.email;
 
         if (!userEmail) {
@@ -35,14 +36,11 @@ export default function ManageAppealsPage() {
           return;
         }
 
-        // APPROACH 1: Fetch by user email (Recommended)
+        // Fetch by user email
         const res = await fetch(`http://localhost:5000/api/appeals/user/email/${encodeURIComponent(userEmail)}`);
         
-        // APPROACH 2: Or fetch all and filter client-side (Fallback)
-        // const res = await fetch('http://localhost:5000/api/appeals');
-
         if (!res.ok) {
-          // যদি specific endpoint না থাকে, সব appeals fetch করি
+          // Fallback: fetch all and filter client-side
           const fallbackRes = await fetch('http://localhost:5000/api/appeals');
           if (!fallbackRes.ok) throw new Error(`Failed to fetch appeals: ${fallbackRes.status}`);
           
@@ -98,7 +96,7 @@ export default function ManageAppealsPage() {
     }
   };
 
-  // Debugging info দেখানোর জন্য
+  // Debugging info
   if (status === "authenticated" && error?.includes("not authenticated")) {
     console.log("Debug - Session exists but error:", {
       session: session,

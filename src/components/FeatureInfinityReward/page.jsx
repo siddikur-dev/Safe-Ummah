@@ -67,7 +67,7 @@ const FeatureInfinityReward = () => {
     {/* Left Content */}
     <div ref={contentRef} className="text-center lg:text-left space-y-8">
       <div className="space-y-4">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
           One Donation,
           <br />
           <span className="text-red-600">
@@ -89,7 +89,7 @@ const FeatureInfinityReward = () => {
         </h1>
       </div>
 
-      <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl">
+      <p className="text-gray-600 mt-3 max-w-xl mx-auto">
         Ummahly is a modern faith-driven charity platform dedicated to
         empowering communities and uplifting the Ummah. From emergency
         relief to long-term development, we strive to bring hope, dignity,

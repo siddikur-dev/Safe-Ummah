@@ -5,6 +5,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 import Link from "next/link";
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 const CurrentAppeal = () => {
   const sectionRef = useRef(null);
@@ -139,7 +141,7 @@ const CurrentAppeal = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div ref={sectionRef} className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
             Current Campaigns
           </h2>
           <p className="text-gray-600 mt-3 max-w-xl mx-auto">
@@ -151,11 +153,7 @@ const CurrentAppeal = () => {
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {campaigns.map((campaign, index) => (
-            <div
-              key={campaign._id}
-              ref={addToRefs}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group"
-            >
+            <Card key={campaign._id} ref={addToRefs} className="group">
               {/* Image */}
               <div className="h-52 overflow-hidden">
                 <Image
@@ -177,17 +175,17 @@ const CurrentAppeal = () => {
                 </h3>
 
                 <div className="text-center">
-                  <Link
+                  <Button
                     href={`/appeals/${campaign._id}`}
-                    className="inline-block w-full bg-red-600 text-white font-medium py-2.5 rounded-lg transition-all duration-300 shadow hover:bg-red-700"
+                    className="w-full"
                     onMouseEnter={(e) => buttonHoverAnimation(e.target, true)}
                     onMouseLeave={(e) => buttonHoverAnimation(e.target, false)}
                   >
                     View Details
-                  </Link>
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 

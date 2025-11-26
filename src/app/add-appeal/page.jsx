@@ -163,7 +163,7 @@ const AppealForm = () => {
       <div ref={containerRef} className="max-w-2xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#af002b]">
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
             <Typewriter
               options={{
                 strings: [
@@ -173,7 +173,7 @@ const AppealForm = () => {
                 ],
                 autoStart: true,
                 loop: true,
-                delay: 50,
+                delay: 90,
                 deleteSpeed: 30,
               }}
             />

@@ -109,7 +109,7 @@ const BoostRewards = () => {
         <div className="text-center mb-12">
           <h1
             ref={titleRef}
-            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
+            className="text-4xl md:text-5xl font-extrabold mb-4"
             style={{ color: "#af002b" }}
           >
             <Typewriter
