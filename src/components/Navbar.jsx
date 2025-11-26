@@ -181,13 +181,13 @@ const Navbar = () => {
 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    <Link
+                    {/* <Link
                       href="/manage-appeals"
                       className="block px-4 py-2 text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       Manage Appeals
-                    </Link>
+                    </Link> */}
                     <Link
                       href="/dashboard"
                       className="block px-4 py-2 text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"

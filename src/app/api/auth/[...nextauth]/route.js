@@ -32,7 +32,6 @@ providers.push(
             throw new Error("Email and password are required");
           }
 
-          console.log("🔐 Login attempt in NextAuth:", credentials.email);
 
           // Use API client for authentication
           const response = await apiClient.login({
@@ -40,10 +39,8 @@ providers.push(
             password: credentials.password,
           });
 
-          console.log("🔍 Express backend response:", response);
 
           if (response.success && response.user) {
-            console.log("✅ User authenticated:", response.user.email);
             return {
               id: response.user.id || response.user._id.toString(),
               email: response.user.email,

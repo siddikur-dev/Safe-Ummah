@@ -48,7 +48,7 @@ const AppealDetails = () => {
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/appeals/${appealId}`
+        `https://safe-ummah-server.vercel.app/api/appeals/${appealId}`
       );
       return res.data.appeal;
     },

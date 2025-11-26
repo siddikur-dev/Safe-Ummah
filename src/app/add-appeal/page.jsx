@@ -46,7 +46,6 @@ const AppealForm = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
-      console.log("❌ User not authenticated, redirecting to login...");
       router.push("/login");
     }
   }, [user, router]);
@@ -58,8 +57,6 @@ const AppealForm = () => {
       data.image = defaultImage;
     }
 
-    console.log("🔍 Form Data:", data);
-    console.log("🔍 Current User:", user);
 
     // Form submission animation
     gsap.to(formRef.current, {
@@ -74,17 +71,12 @@ const AppealForm = () => {
         data.userId = user.id || user._id;
         data.userEmail = user.email;
         data.creatorName = user.name;
-        console.log("✅ Added user data to appeal:", {
-          userId: data.userId,
-          userEmail: data.userEmail,
-          creatorName: data.creatorName,
-        });
+       
       } else {
         throw new Error("User not authenticated");
       }
 
-      const res = await axios.post("http://localhost:5000/api/appeals", data);
-      console.log("✅ API Response:", res.data);
+      const res = await axios.post("https://safe-ummah-server.vercel.app/api/appeals", data);
 
       // Success animation
       gsap.to(formRef.current, {
