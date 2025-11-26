@@ -1,388 +1,88 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Poppins } from 'next/font/google';
+import Link from 'next/link';
+import { useState } from 'react';
+import { FiMenu, FiX } from 'react-icons/fi';
+import { useSession, signIn, signOut } from 'next-auth/react';
+// import ThemeToggle from './ThemeToggle';
 
-const poppins = Poppins({ weight: ['600','700'], subsets: ['latin'], display: 'swap' });
-import Link from "next/link";
-import Image from "next/image";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
-
-  const handleLogout = () => {
-    logout();
-    setIsDropdownOpen(false);
-    setIsMobileMenuOpen(false);
-    router.push("/");
-  };
-
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Add Appeal", href: "/add-appeal" },
-    { label: "All Appeal", href: "/appeals" },
-    { label: "About", href: "/about" },
-  ];
-
-  const [isNewsOpen, setIsNewsOpen] = useState(false);
-  const staticNews = [
-    {
-      id: 1,
-      title: "Community Relief Drive",
-      description:
-        "Volunteers gathered to distribute emergency supplies to affected families in the region.",
-    },
-    {
-      id: 2,
-      title: "Health Camp Initiative",
-      description:
-        "Free medical check-ups and medicines were provided by our partner clinics.",
-    },
-    {
-      id: 3,
-      title: "Education Support",
-      description:
-        "Scholarships announced for underprivileged children to continue their schooling.",
-    },
-  ];
+  console.log(session?.user)
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg">
-              <Image
-                src="/ummah-logo.png"
-                alt="Safe Ummah Logo"
-                width={100}
-                height={50}
-              />
-            </div>
-            <h2 className={`${poppins.className} text-2xl font-bold text-gray-800`}>Safe Ummah</h2>
-          </Link>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            {navItems.map((item) => {
-              if (item.label === "News") {
-                return (
-                  <div
-                    key={item.label}
-                    onMouseEnter={() => setIsNewsOpen(true)}
-                    onMouseLeave={() => setIsNewsOpen(false)}
-                    className="relative"
-                  >
-                    <Link
-                      href={item.href}
-                      className="text-gray-700 hover:text-[#af002b] font-medium transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-
-                    {isNewsOpen && (
-                      <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                          Latest News
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Updates and highlights from the Safe Ummah community.
-                        </p>
-                        <div className="grid grid-cols-1 gap-3">
-                          {staticNews.map((n) => (
-                            <div
-                              key={n.id}
-                              className="p-3 bg-gray-50 rounded-lg"
-                            >
-                              <div className="font-medium text-gray-900">
-                                {n.title}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {n.description}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="text-right mt-3">
-                          <Link
-                            href="/news"
-                            className="text-sm text-[#af002b] font-medium"
-                          >
-                            See all news →
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="text-gray-700 hover:text-[#af002b] font-medium transition-colors"
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Auth Section - Desktop */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={toggleDropdown}
-                  className="flex items-center space-x-2 border border-gray-200 rounded-2xl px-3 py-1 bg-gray-100 hover:bg-gray-50 transition-colors"
-                >
-                  {user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                      {user.name?.charAt(0)?.toUpperCase() ||
-                        user.email?.charAt(0)?.toUpperCase() ||
-                        "U"}
-                    </div>
-                  )}
-                  <span className="text-[#af002b] font-medium">
-                    {user.name || user.email}
-                  </span>
-                  <svg
-                    className={`w-4 h-4 text-gray-500 transition-transform ${
-                      isDropdownOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    {/* <Link
-                      href="/manage-appeals"
-                      className="block px-4 py-2 text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Manage Appeals
-                    </Link> */}
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/login"
-                  className="text-gray-700 hover:text-[#af002b] font-medium transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="px-6 py-2 rounded-lg bg-[#af002b] text-white border border-[#af002b] hover:bg-[#900023] transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-            onClick={toggleMobileMenu}
+    <nav className="w-full bg-white shadow sticky top-0 z-50 border-b border-gray-100">
+      <div className="max-w-[1440px] mx-auto flex items-center justify-between px-4 py-4">
+        <Link href="/" className="text-2xl font-extrabold tracking-tight text-gray-900 hover:text-red-500 transition-colors">
+          Next Product
+        </Link>
+        
+        {/* Hamburger button */}
+        <button
+          className="sm:hidden flex items-center px-3 py-2 border rounded text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle Menu"
+        >
+          {menuOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
+        </button>
+        
+        {/* Menu */}
+        <div
+          className={`flex-col sm:flex-row flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-end bg-white sm:bg-transparent absolute sm:static left-0 top-16 sm:top-auto z-40 p-6 sm:p-0 shadow-lg sm:shadow-none border-t sm:border-t-0 border-gray-100
+            transition-all duration-300 ease-in-out
+            ${menuOpen ? 'opacity-100 pointer-events-auto scale-100 flex' : 'opacity-0 pointer-events-none scale-95 hidden'}
+            sm:opacity-100 sm:pointer-events-auto sm:scale-100 sm:flex`}
+          style={{ minWidth: menuOpen ? '100vw' : undefined }}
+        >
+          <Link 
+            href="/" 
+            className="text-gray-700 hover:text-red-500 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-50" 
+            onClick={() => setMenuOpen(false)}
           >
-            <svg
-              className="w-6 h-6 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            Home
+          </Link>
+          
+          <Link 
+            href="/products" 
+            className="text-gray-700 hover:text-red-500 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-50" 
+            onClick={() => setMenuOpen(false)}
+          >
+            Products
+          </Link>
+          
+          {session && (
+            <Link 
+              href="/dashboard/add-product" 
+              className="text-gray-700 hover:text-red-500 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-50" 
+              onClick={() => setMenuOpen(false)}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={
-                  isMobileMenuOpen
-                    ? "M6 18L18 6M6 6l12 12"
-                    : "M4 6h26M4 12h26M4 18h26"
-                }
-              />
-            </svg>
-          </button>
+              Add Product
+            </Link>
+          )}
+          
+          {!session ? (
+            <Link 
+              href="/login" 
+              className="inline-flex items-center px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-200 border-2 border-red-500 hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+              onClick={() => setMenuOpen(false)}
+            >
+              Login
+            </Link>
+          ) : (
+            <button
+              onClick={() => { setMenuOpen(false); signOut(); }}
+              className="inline-flex items-center px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-200 border-2 border-red-500 hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            >
+              Logout
+            </button>
+          )}
+          
+          {/* <ThemeToggle /> */}
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden mt-2 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            <div className="flex flex-col px-4 py-2 space-y-2">
-              {navItems.map((item) =>
-                item.label === "News" ? (
-                  <div key={item.label} className="py-2 px-3">
-                    <button
-                      onClick={() => setIsNewsOpen(!isNewsOpen)}
-                      className="w-full text-left py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors flex items-center justify-between"
-                    >
-                      <span>News</span>
-                      <svg
-                        className={`w-4 h-4 transition-transform ${
-                          isNewsOpen ? "rotate-180" : ""
-                        }`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-
-                    {isNewsOpen && (
-                      <div className="mt-2 space-y-2">
-                        {staticNews.map((n) => (
-                          <div key={n.id} className="p-3 bg-gray-50 rounded-lg">
-                            <div className="font-medium text-gray-900">
-                              {n.title}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {n.description}
-                            </div>
-                          </div>
-                        ))}
-                        <Link
-                          href="/appeals"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="block text-sm text-[#af002b] mt-1"
-                        >
-                          All Appeals
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              )}
-
-              <div className="border-t border-gray-200 pt-4 mt-2">
-                {user ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-3 px-3 py-2 bg-gray-100 rounded-lg">
-                      {user.image ? (
-                        <img
-                          src={user.image}
-                          alt={user.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-[#af002b] rounded-full flex items-center justify-center text-white font-semibold">
-                          {user.name?.charAt(0)?.toUpperCase() ||
-                            user.email?.charAt(0)?.toUpperCase() ||
-                            "U"}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">
-                          {user.name || "User"}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/manage-appeals"
-                      className="block py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Manage Appeals
-                    </Link>
-
-                    <Link
-                      href="/dashboard"
-                      className="block py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Link
-                      href="/login"
-                      className="w-full py-2 px-3 rounded-lg text-gray-700 hover:text-[#af002b] hover:bg-gray-100 text-center transition-colors block"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="w-full py-2 px-3 rounded-lg text-white bg-[#af002b] hover:bg-[#900023] text-center transition-colors block"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </header>
+    </nav>
   );
-};
+}
 
-export default Navbar;

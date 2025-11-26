@@ -1,361 +1,124 @@
-// app/login/page.jsx
 "use client";
+import { signIn } from "next-auth/react";
+import Link from 'next/link';
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useAuth } from "@/contexts/AuthContext";
-
-// Disable static optimization for this page
-export const dynamic = 'force-dynamic';
-
-const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-
-// Firebase configuration getter - only initialize when needed
-const getFirebaseConfig = () => ({
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-});
-
-// Initialize Firebase only on client side
-const getFirebaseAuth = () => {
-  if (typeof window === 'undefined') return null;
-  
-  const apps = getApps();
-  const app = apps.length === 0 ? initializeApp(getFirebaseConfig()) : apps[0];
-  return getAuth(app);
-};
-
-function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
-  const { user, login, loading: authLoading } = useAuth();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") || "/";
-
-  // Redirect if already logged in - শুধু যখন user আছে এবং authLoading false
-  useEffect(() => {
-    if (!authLoading && user) {
-      const dest = callbackUrl || "/";
-      router.push(dest);
-    }
-  }, [user, authLoading, router, callbackUrl]);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setGoogleLoading(true);
-      setError("");
-
-      const provider = new GoogleAuthProvider();
-      provider.addScope("email");
-      provider.addScope("profile");
-
-      const result = await signInWithPopup(getFirebaseAuth(), provider);
-      const googleUser = result.user;
-
-      const idToken = await googleUser.getIdToken();
-
-      const response = await fetch(
-        `${baseUrl}/api/auth/google`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ idToken }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Update auth context - এইটা সবচেয়ে গুরুত্বপূর্ণ
-        login(data.user);
-
-        // Store data in localStorage
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token || idToken);
-
-        // Small delay to ensure state is updated before redirect
-        setTimeout(() => {
-          router.push(callbackUrl || "/");
-        }, 500);
-      } else {
-        console.error("❌ Backend error:", data.message);
-        setError(data.message || "Google sign-in failed");
-      }
-    } catch (error) {
-      console.error("❌ Google Sign-In error:", error);
-      if (error.code === "auth/popup-closed-by-user") {
-        setError("Sign-in cancelled by user");
-      } else if (error.code === "auth/popup-blocked") {
-        setError(
-          "Popup blocked by browser. Please allow popups for this site."
-        );
-      } else {
-        setError("Failed to sign in with Google. Please try again.");
-      }
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(
-        `${baseUrl}/api/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Update auth context
-        login(data.user);
-
-        // Store user data
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Small delay to ensure state is updated
-        setTimeout(() => {
-          router.push(callbackUrl || "/");
-        }, 500);
-      } else {
-        console.error("❌ Login error:", data.message);
-        setError(data.message || "Invalid email or password");
-      }
-    } catch (error) {
-      console.error("❌ Login error:", error);
-      setError("Login failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#af002b] mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show redirect message if already logged in
-  if (user && !authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Already logged in! Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-
+export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 right-20 w-64 h-64 bg-red-50 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-red-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-16">
+        {/* Page Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center px-4 py-2 bg-red-50 border border-red-200 rounded-full text-red-600 text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+            Welcome Back
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            Sign In to Your
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">
+              Account
+            </span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Access your dashboard and manage your products with ease.
+          </p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
+        {/* Login Container */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 w-full max-w-md">
+          {/* Google Sign In Button */}
+          <button
+            onClick={() => signIn("google", { callbackUrl: "/products" })}
+            className="w-full bg-red-500 border-2 border-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-red-600 hover:border-red-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6"
+          >
+            <div className="flex items-center justify-center">
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Sign in with Google
+            </div>
+          </button>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
           </div>
-        )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#af002b] focus:border-[#af002b]"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#af002b] focus:border-[#af002b]"
-                  placeholder="Enter your password"
-                />
-              </div>
-            </div>
-
+          {/* Manual Sign In Form Placeholder */}
+          <div className="space-y-4">
             <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#af002b] hover:bg-[#900023] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#af002b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Signing in...
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500 transition-all duration-200" 
+                disabled
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input 
+                type="password" 
+                placeholder="Enter your password" 
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 placeholder-gray-500 transition-all duration-200" 
+                disabled
+              />
+            </div>
+            <button 
+              className="w-full bg-gray-300 text-gray-500 font-semibold py-3 px-6 rounded-lg cursor-not-allowed"
+              disabled
+            >
+              Sign In
+            </button>
+          </div>
 
-            <div className="text-center">
-              <span className="text-gray-600">
-                Don&apos;t have an account?{" "}
-              </span>
-              <Link
-                href="/register"
-                className="font-medium text-[#af002b] hover:text-[#900023]"
-              >
-                Sign up
-              </Link>
-            </div>
+          {/* Register Link */}
+          <div className="text-center mt-8 pt-6 border-t border-gray-200">
+            <p className="text-gray-600 mb-2">
+              Don&apos;t have an account?
+            </p>
+            <Link 
+              href="/register" 
+              className="inline-flex items-center text-red-500 hover:text-red-600 font-medium transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Create Account
+            </Link>
+          </div>
 
-            {/* Divider */}
-            <div className="relative flex items-center justify-center">
-              <span className="h-px w-1/3 bg-gray-200"></span>
-              <span className="px-2 text-sm text-gray-400">or</span>
-              <span className="h-px w-1/3 bg-gray-200"></span>
-            </div>
-
-            {/* Google Sign In Button */}
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={googleLoading}
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {googleLoading ? (
-                  <svg
-                    className="animate-spin h-5 w-5 text-gray-500"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-5 h-5"
-                    viewBox="0 0 533.5 544.3"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden
-                  >
-                    <path
-                      fill="#4285f4"
-                      d="M533.5 278.4c0-18.5-1.6-36.3-4.6-53.4H272v101h147.4c-6.3 33.8-25.3 62.4-54 81.6v67.7h87.1c51.1-47 80-116.4 80-196.9z"
-                    />
-                    <path
-                      fill="#34a853"
-                      d="M272 544.3c73.6 0 135.4-24.3 180.6-66.1l-87.1-67.7c-24.2 16.3-55.3 25.9-93.5 25.9-71.9 0-132.9-48.6-154.8-114.1H28.6v71.6C73.9 485.8 166.6 544.3 272 544.3z"
-                    />
-                    <path
-                      fill="#fbbc04"
-                      d="M117.2 328.3c-10.8-32.6-10.8-67.7 0-100.3V156.4H28.6c-34.7 68.1-34.7 147.3 0 215.4l88.6-43.5z"
-                    />
-                    <path
-                      fill="#ea4335"
-                      d="M272 107.7c39.9 0 75.8 13.7 104.1 40.6l78-78C403.8 24.3 341.9 0 272 0 166.6 0 73.9 58.5 28.6 156.4l88.6 71.6C139.1 156.3 200.1 107.7 272 107.7z"
-                    />
-                  </svg>
-                )}
-                <span className="text-sm font-medium text-gray-700">
-                  {googleLoading ? "Signing in..." : "Continue with Google"}
-                </span>
-              </button>
-            </div>
-        </form>
+          {/* Back to Home */}
+          <div className="text-center mt-6">
+            <Link 
+              href="/" 
+              className="inline-flex items-center text-gray-500 hover:text-gray-700 font-medium transition-colors text-sm"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Home
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
-  );
-}
-
-export default function Login() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#af002b] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   );
 }

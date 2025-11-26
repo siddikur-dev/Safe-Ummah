@@ -1,15 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    domains: ["imgbb.com", "i.ibb.co", "www.pik.in", "pik.in"],
-    remotePatterns: [
-      { protocol: "https", hostname: "imgbb.com" },
-      { protocol: "https", hostname: "i.ibb.co" },
-      { protocol: "https", hostname: "www.pik.in" },
-      { protocol: "https", hostname: "pik.in" },
-      { protocol: "https", hostname: "**" },
-    ],
-  },
+	images: {
+		remotePatterns: [
+			{
+				protocol: 'https',
+				hostname: 'i.postimg.cc',
+			},
+			{
+				protocol: 'https',
+				hostname: 'lh3.googleusercontent.com',
+			},
+			{
+				protocol: 'https',
+				hostname: 'images.unsplash.com',
+			},
+		],
+	},
 };
 
 export default nextConfig;

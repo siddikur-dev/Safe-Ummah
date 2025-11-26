@@ -1,88 +1,31 @@
 @import "tailwindcss";
 
-/* Design tokens: colors & type scale (keeps UI consistent) */
+/* Tailwind default theme + CSS variables */
 :root {
-  --color-primary: #af002b;
-  --color-primary-600: #900023;
-  --color-accent: #ffb3bf;
-  --bg-100: #f6f8fa;
-  --bg-200: #fcfaed;
-  --muted: #6b7280;
-  --radius: 0.75rem;
+  --background: #171717;
+  --foreground: #171717;
 }
 
-/* Enable DaisyUI */
-@plugin "daisyui";
+/* .dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+} */
 
-/* Custom Light Theme for DaisyUI */
-@plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  --color-primary: var(--color-primary);
-  --color-base-100: var(--bg-100);
-  --color-base-200: var(--bg-200);
-}
-
-/* Import Mona Sans from local fonts */
-@font-face {
-  font-family: "Mona Sans";
-  src: url("/fonts/Mona-Sans-Regular.woff2") format("woff2"),
-    url("/fonts/Mona-Sans-Regular.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Mona Sans";
-  src: url("/fonts/Mona-Sans-Bold.woff2") format("woff2"),
-    url("/fonts/Mona-Sans-Bold.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Base typography */
-html {
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme inline {
+  /* --color-background: var(--background);
+  --color-foreground: var(--foreground); */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
-  font-family: "Inter", "Mona Sans", system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
-  background: var(--bg-100);
-  color: #0f172a;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Headings */
-h1 { font-size: 2.25rem; line-height: 1.1; font-weight:700 }
-h2 { font-size: 1.75rem; line-height: 1.15; font-weight:700 }
-h3 { font-size: 1.25rem; line-height: 1.2; font-weight:600 }
-
-/* Buttons / focus */
-button, a[role="button"] {
-  transition: transform .12s ease, box-shadow .12s ease;
-}
-
-button:focus, a:focus, input:focus, select:focus, textarea:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(175,0,43,0.12);
-}
-
-/* Card utility: optional global small helper */
-.ui-card { border-radius: var(--radius); background: white; box-shadow: 0 1px 3px rgba(2,6,23,0.06); }
-
-/* Small micro-animation for hoverable cards */
-.hover-raise:hover { transform: translateY(-4px); }
-
-/* Form helpers */
-.form-error { color: #b91c1c; font-size: 0.9rem; }
-
-/* Responsive tweaks (if needed) */
-@media (min-width: 768px) {
-  h1 { font-size: 2.75rem }
-  h2 { font-size: 2rem }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
