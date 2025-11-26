@@ -76,7 +76,7 @@ const AppealForm = () => {
         throw new Error("User not authenticated");
       }
 
-      const res = await axios.post("https://safe-ummah-server.vercel.app/api/appeals", data);
+      const res = await axios.post("http://localhost:5000/api/appeals", data);
 
       // Success animation
       gsap.to(formRef.current, {

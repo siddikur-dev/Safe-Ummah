@@ -36,7 +36,7 @@ export default function ManageAppealsPage() {
 
         // Fetch by user email
         const res = await fetch(
-          `https://safe-ummah-server.vercel.app/api/appeals/user/email/${encodeURIComponent(
+          `http://localhost:5000/api/appeals/user/email/${encodeURIComponent(
             userEmail
           )}`
         );
@@ -44,7 +44,7 @@ export default function ManageAppealsPage() {
         if (!res.ok) {
           // Fallback: fetch all and filter client-side
           const fallbackRes = await fetch(
-            "https://safe-ummah-server.vercel.app/api/appeals"
+            "http://localhost:5000/api/appeals"
           );
           if (!fallbackRes.ok)
             throw new Error(`Failed to fetch appeals: ${fallbackRes.status}`);
@@ -92,7 +92,7 @@ export default function ManageAppealsPage() {
 
     try {
       const res = await fetch(
-        `https://safe-ummah-server.vercel.app/api/appeals/${id}`,
+        `http://localhost:5000/api/appeals/${id}`,
         {
           method: "DELETE",
         }

@@ -20,7 +20,7 @@ const CurrentAppeal = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("https://safe-ummah-server.vercel.app/api/appeals");
+        const res = await fetch("http://localhost:5000/api/appeals");
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);

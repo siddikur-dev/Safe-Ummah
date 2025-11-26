@@ -24,7 +24,7 @@ const Dashboard = () => {
         }
 
         const res = await fetch(
-          "https://safe-ummah-server.vercel.app/api/appeals"
+          "http://localhost:5000/api/appeals"
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -86,20 +86,20 @@ const Dashboard = () => {
 
       // APPROACH 1: User ID দিয়ে fetch
       const res = await fetch(
-        `https://safe-ummah-server.vercel.app/api/appeals/user/${userId}`
+        `http://localhost:5000/api/appeals/user/${userId}`
       );
 
       // APPROACH 2: User Email দিয়ে fetch (যদি backend support করে)
-      // const res = await fetch(`https://safe-ummah-server.vercel.app/api/appeals/user/email/${encodeURIComponent(userEmail)}`);
+      // const res = await fetch(`http://localhost:5000/api/appeals/user/email/${encodeURIComponent(userEmail)}`);
 
       // APPROACH 3: Query parameter দিয়ে
-      // const res = await fetch(`https://safe-ummah-server.vercel.app/api/appeals?userId=${userId}`);
+      // const res = await fetch(`http://localhost:5000/api/appeals?userId=${userId}`);
 
       if (!res.ok) {
         // যদি user-specific endpoint না থাকে, fallback to all appeals with filtering
 
         const fallbackRes = await fetch(
-          "https://safe-ummah-server.vercel.app/api/appeals"
+          "http://localhost:5000/api/appeals"
         );
         if (!fallbackRes.ok) throw new Error(`HTTP ${fallbackRes.status}`);
 
@@ -142,7 +142,7 @@ const Dashboard = () => {
       return;
     try {
       const res = await fetch(
-        `https://safe-ummah-server.vercel.app/api/appeals/${id}`,
+        `http://localhost:5000/api/appeals/${id}`,
         {
           method: "DELETE",
         }

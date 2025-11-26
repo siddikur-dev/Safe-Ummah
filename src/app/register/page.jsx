@@ -56,7 +56,7 @@ export default function RegisterPage() {
 
       // Send to your backend
       const response = await fetch(
-        "https://safe-ummah-server.vercel.app/api/auth/google",
+        "http://localhost:5000/api/auth/google",
         {
           method: "POST",
           headers: {
@@ -122,7 +122,7 @@ export default function RegisterPage() {
       };
 
       const res = await fetch(
-        "https://safe-ummah-server.vercel.app/api/auth/register",
+        "http://localhost:5000/api/auth/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

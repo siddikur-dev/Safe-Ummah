@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 const HeroSection = () => {
@@ -23,12 +24,13 @@ const HeroSection = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-200 shadow-md">
-            DONATE NOW
-          </button>
-          <button className="bg-white hover:bg-gray-100 text-red-700 px-6 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-200 shadow-md">
+          
+          <Link
+            href={"/about"}
+            className="bg-white hover:bg-gray-100 text-red-700 px-6 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-200 shadow-md"
+          >
             LEARN MORE
-          </button>
+          </Link>
         </div>
 
         {/* Urgent Badge */}
