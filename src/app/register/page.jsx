@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 // Disable static optimization for this page
 export const dynamic = 'force-dynamic';
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 // Firebase configuration getter - only initialize when needed
 const getFirebaseConfig = () => ({
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -64,7 +66,7 @@ export default function RegisterPage() {
 
       // Send to your backend
       const response = await fetch(
-        "http://localhost:5000/api/auth/google",
+        `${baseUrl}/api/auth/google`,
         {
           method: "POST",
           headers: {
@@ -130,7 +132,7 @@ export default function RegisterPage() {
       };
 
       const res = await fetch(
-        "http://localhost:5000/api/auth/register",
+        `${baseUrl}/api/auth/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

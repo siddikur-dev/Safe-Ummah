@@ -8,6 +8,8 @@ import Link from "next/link";
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 const CurrentAppeal = () => {
   const sectionRef = useRef(null);
   const campaignsRef = useRef([]);
@@ -20,7 +22,7 @@ const CurrentAppeal = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://localhost:5000/api/appeals");
+        const res = await fetch(`${baseUrl}/api/appeals`);
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);

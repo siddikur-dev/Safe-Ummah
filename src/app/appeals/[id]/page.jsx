@@ -10,6 +10,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 const AppealDetails = () => {
   const params = useParams();
   const appealId = params.id;
@@ -48,7 +50,7 @@ const AppealDetails = () => {
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/appeals/${appealId}`
+        `${baseUrl}/api/appeals/${appealId}`
       );
       return res.data.appeal;
     },

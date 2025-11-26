@@ -6,6 +6,8 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { useSession } from "next-auth/react";
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 export default function ManageAppealsPage() {
   const { data: session, status } = useSession();
   const [appeals, setAppeals] = useState([]);
@@ -36,7 +38,7 @@ export default function ManageAppealsPage() {
 
         // Fetch by user email
         const res = await fetch(
-          `http://localhost:5000/api/appeals/user/email/${encodeURIComponent(
+          `${baseUrl}/api/appeals/user/email/${encodeURIComponent(
             userEmail
           )}`
         );
@@ -44,7 +46,7 @@ export default function ManageAppealsPage() {
         if (!res.ok) {
           // Fallback: fetch all and filter client-side
           const fallbackRes = await fetch(
-            "http://localhost:5000/api/appeals"
+            `${baseUrl}/api/appeals`
           );
           if (!fallbackRes.ok)
             throw new Error(`Failed to fetch appeals: ${fallbackRes.status}`);
@@ -92,7 +94,7 @@ export default function ManageAppealsPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/appeals/${id}`,
+        `${baseUrl}/api/appeals/${id}`,
         {
           method: "DELETE",
         }

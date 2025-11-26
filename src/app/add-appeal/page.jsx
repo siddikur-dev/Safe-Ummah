@@ -8,6 +8,8 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 const AppealForm = () => {
   const formRef = useRef(null);
   const containerRef = useRef(null);
@@ -76,7 +78,7 @@ const AppealForm = () => {
         throw new Error("User not authenticated");
       }
 
-      const res = await axios.post("http://localhost:5000/api/appeals", data);
+      const res = await axios.post(`${baseUrl}/api/appeals`, data);
 
       // Success animation
       gsap.to(formRef.current, {

@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useAuth } from "@/contexts/AuthContext";
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 const AppealListPage = () => {
   const { data: session } = useSession();
   const { user: authUser } = useAuth();
@@ -41,7 +43,7 @@ const AppealListPage = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://localhost:5000/api/appeals");
+        const res = await fetch(`${baseUrl}/api/appeals`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
         const data = await res.json();

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
+const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
 const Dashboard = () => {
   const { user } = useAuth();
   const router = useRouter();
@@ -24,7 +26,7 @@ const Dashboard = () => {
         }
 
         const res = await fetch(
-          "http://localhost:5000/api/appeals"
+          `${baseUrl}/api/appeals`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -86,7 +88,7 @@ const Dashboard = () => {
 
       // APPROACH 1: User ID দিয়ে fetch
       const res = await fetch(
-        `http://localhost:5000/api/appeals/user/${userId}`
+        `${baseUrl}/api/appeals/user/${userId}`
       );
 
       // APPROACH 2: User Email দিয়ে fetch (যদি backend support করে)
@@ -99,7 +101,7 @@ const Dashboard = () => {
         // যদি user-specific endpoint না থাকে, fallback to all appeals with filtering
 
         const fallbackRes = await fetch(
-          "http://localhost:5000/api/appeals"
+          `${baseUrl}/api/appeals`
         );
         if (!fallbackRes.ok) throw new Error(`HTTP ${fallbackRes.status}`);
 
@@ -142,7 +144,7 @@ const Dashboard = () => {
       return;
     try {
       const res = await fetch(
-        `http://localhost:5000/api/appeals/${id}`,
+        `${baseUrl}/api/appeals/${id}`,
         {
           method: "DELETE",
         }
