@@ -3,24 +3,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Firebase configuration - শুধু একবার initialize করুন
-const firebaseConfig = {
+// Disable static optimization for this page
+export const dynamic = 'force-dynamic';
+
+// Firebase configuration getter - only initialize when needed
+const getFirebaseConfig = () => ({
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+});
 
-// Initialize Firebase (একবারই initialize করুন)
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Initialize Firebase only on client side
+const getFirebaseAuth = () => {
+  if (typeof window === 'undefined') return null;
+  
+  const apps = getApps();
+  const app = apps.length === 0 ? initializeApp(getFirebaseConfig()) : apps[0];
+  return getAuth(app);
+};
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -48,7 +56,7 @@ export default function RegisterPage() {
       provider.addScope("profile");
 
       // Firebase Google Sign-In
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(getFirebaseAuth(), provider);
       const user = result.user;
 
       // Get Firebase ID token
