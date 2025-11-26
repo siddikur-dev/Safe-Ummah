@@ -8,36 +8,42 @@ import gsap from "gsap";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AppealDetails = () => {
   const params = useParams();
   const appealId = params.id;
   const { data: session, status } = useSession();
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const containerRef = useRef(null);
   const contentRef = useRef(null);
 
+  // Check authentication status
+  const isAuthenticated = !!(session || authUser);
+  const isLoadingAuth = status === "loading" || authLoading;
+
   // Redirect if not authenticated
   useEffect(() => {
-    if (status === "loading") return;
+    if (isLoadingAuth) return;
 
-    if (!session) {
-      router.push("/login");
+    if (!isAuthenticated) {
+      const callbackUrl = encodeURIComponent(`/appeals/${appealId}`);
+      router.push(`/login?callbackUrl=${callbackUrl}`);
       return;
     }
-  }, [session, status, router]);
+  }, [isAuthenticated, isLoadingAuth, router, appealId]);
 
   // Fetch appeal details - only if authenticated
   const {
-    data: appeal = [],
-    isLoading,
+    data: appeal = null,
+    isLoading: isLoadingAppeal,
     error,
   } = useQuery({
     queryKey: ["appeal", appealId],
     queryFn: async () => {
-      // Check if user is authenticated before making the request
-      if (!session) {
+      if (!isAuthenticated) {
         throw new Error("User not authenticated");
       }
 
@@ -46,7 +52,8 @@ const AppealDetails = () => {
       );
       return res.data.appeal;
     },
-    enabled: !!session, // Only fetch if user is authenticated
+    enabled: isAuthenticated && !isLoadingAuth, // Only fetch if user is authenticated
+    retry: 1,
   });
 
   // GSAP Animations
@@ -86,22 +93,30 @@ const AppealDetails = () => {
     return level || "critical";
   };
 
-  // Safe image handling function
   const getImageUrl = (image) => {
     if (!image) {
       return "/default-appeal-image.jpg";
     }
-    
-    // Check if image is a valid URL or path
-    if (typeof image === 'string' && (image.startsWith('http') || image.startsWith('/'))) {
-      return image;
+
+    if (typeof image === "string") {
+      if (image.includes("imgbb.com")) {
+        const match = image.match(/ibb\.co\/([a-zA-Z0-9]+)/);
+        if (match) {
+          return `https://i.ibb.co/${match[1]}/image.jpg`;
+        }
+        return "/default-appeal-image.jpg";
+      }
+
+      if (image.startsWith("http") || image.startsWith("/")) {
+        return image;
+      }
     }
-    
+
     return "/default-appeal-image.jpg";
   };
 
   // Show loading while checking authentication
-  if (status === "loading") {
+  if (isLoadingAuth) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -113,11 +128,19 @@ const AppealDetails = () => {
   }
 
   // Don't render anything if not authenticated (will redirect)
-  if (!session) {
-    return null;
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (isLoading) {
+  // Show loading while fetching appeal data
+  if (isLoadingAppeal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -128,6 +151,7 @@ const AppealDetails = () => {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -142,12 +166,25 @@ const AppealDetails = () => {
               ? "Please log in to view appeal details."
               : error.message}
           </p>
-          {error.message === "User not authenticated" && (
+          {error.message === "User not authenticated" ? (
             <button
-              onClick={() => router.push("/login")}
+              onClick={() =>
+                router.push(
+                  `/login?callbackUrl=${encodeURIComponent(
+                    `/appeals/${appealId}`
+                  )}`
+                )
+              }
               className="bg-[#af002b] text-white px-6 py-2 rounded-lg hover:bg-[#900023] transition-colors"
             >
               Go to Login
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push("/appeals")}
+              className="bg-[#af002b] text-white px-6 py-2 rounded-lg hover:bg-[#900023] transition-colors"
+            >
+              Back to Appeals
             </button>
           )}
         </div>
@@ -155,6 +192,7 @@ const AppealDetails = () => {
     );
   }
 
+  // Show not found state
   if (!appeal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -162,6 +200,9 @@ const AppealDetails = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Appeal Not Found
           </h2>
+          <p className="text-gray-600 mb-4">
+            The appeal you're looking for doesn't exist or you don't have permission to view it.
+          </p>
           <button
             onClick={() => router.push("/appeals")}
             className="bg-[#af002b] text-white px-6 py-2 rounded-lg hover:bg-[#900023] transition-colors"
@@ -188,7 +229,11 @@ const AppealDetails = () => {
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Logged in as:</span>
             <span className="font-semibold text-[#af002b]">
-              {session.user?.name || session.user?.email}
+              {session?.user?.name ||
+                session?.user?.email ||
+                authUser?.name ||
+                authUser?.email ||
+                "Guest"}
             </span>
           </div>
           <button
@@ -209,7 +254,6 @@ const AppealDetails = () => {
           className="object-cover"
           priority
           onError={(e) => {
-            // Fallback to default image if there's an error loading the image
             e.target.src = "/default-appeal-image.jpg";
           }}
         />
@@ -239,7 +283,7 @@ const AppealDetails = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - একই থাকে */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Appeal Details */}
@@ -296,7 +340,9 @@ const AppealDetails = () => {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm font-medium text-gray-600">
                   <span>Raised: $0</span>
-                  <span>Goal: ${appeal.targetAmount?.toLocaleString() || 0}</span>
+                  <span>
+                    Goal: ${appeal.targetAmount?.toLocaleString() || 0}
+                  </span>
                 </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-4">

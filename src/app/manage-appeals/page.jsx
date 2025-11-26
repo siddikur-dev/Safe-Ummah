@@ -12,92 +12,159 @@ export default function ManageAppealsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchAppeals = async () => {
+    const fetchUserAppeals = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // If we have a logged-in user, request only their appeals from the backend
-        const userId = session?.user?.id;
-        const baseUrl = "http://localhost:5000/api/appeals";
-        const url = userId ? `${baseUrl}?userId=${encodeURIComponent(userId)}` : baseUrl;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        console.log("Session:", session); // Debugging এর জন্য
+
+        // Check if user is authenticated
+        if (!session?.user) {
+          setError("User not authenticated");
+          setLoading(false);
+          return;
+        }
+
+        // Get user email from session - NextAuth usually has email
+        const userEmail = session.user.email;
+
+        if (!userEmail) {
+          setError("User email not available");
+          setLoading(false);
+          return;
+        }
+
+        // APPROACH 1: Fetch by user email (Recommended)
+        const res = await fetch(`http://localhost:5000/api/appeals/user/email/${encodeURIComponent(userEmail)}`);
+        
+        // APPROACH 2: Or fetch all and filter client-side (Fallback)
+        // const res = await fetch('http://localhost:5000/api/appeals');
+
+        if (!res.ok) {
+          // যদি specific endpoint না থাকে, সব appeals fetch করি
+          const fallbackRes = await fetch('http://localhost:5000/api/appeals');
+          if (!fallbackRes.ok) throw new Error(`Failed to fetch appeals: ${fallbackRes.status}`);
+          
+          const data = await fallbackRes.json();
+          const allAppeals = data.appeals || [];
+          
+          // Client-side filtering by email
+          const userAppeals = allAppeals.filter(appeal => 
+            appeal.userEmail === userEmail || 
+            (appeal.user && appeal.user.email === userEmail)
+          );
+          
+          setAppeals(userAppeals);
+          return;
+        }
+
         const data = await res.json();
-        const items = data.appeals || data || [];
-
-        // If session not ready, wait; ProtectedRoute should ensure auth but we double-check
-        const userEmail = session?.user?.email?.toLowerCase();
-
-        // If we have user info, filter client-side by common owner fields
-        const filtered = items.filter((a) => {
-          try {
-            const owners = [
-              a.userId,
-              a.user,
-              a.creator,
-              a.owner,
-              a.userEmail,
-              a.creatorEmail,
-              a.email,
-              a.user && a.user.id,
-              a.user && a.user._id,
-            ]
-              .filter(Boolean)
-              .map(String);
-
-            if (userId && owners.includes(String(userId))) return true;
-            if (userEmail) {
-              return owners.some((o) => String(o).toLowerCase() === userEmail);
-            }
-
-            return false;
-          } catch (e) {
-            return false;
-          }
-        });
-
-        // If filtered is empty but items contain an 'owner' field that equals session id, use that; otherwise show only filtered
-        setAppeals(filtered);
+        setAppeals(data.appeals || []);
+        
       } catch (err) {
-        console.error(err);
-        setError(err.message || "Failed to load appeals");
+        console.error("Error fetching appeals:", err);
+        setError(err.message || "Failed to load your appeals");
       } finally {
         setLoading(false);
       }
     };
 
-    // Only fetch when session is ready to ensure filtering works
-    if (status !== "loading") fetchAppeals();
+    // Fetch when session is available
+    if (status === "authenticated") {
+      fetchUserAppeals();
+    } else if (status === "unauthenticated") {
+      setLoading(false);
+      setError("Please log in to view your appeals");
+    }
   }, [session, status]);
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this appeal? This cannot be undone.")) return;
+    if (!confirm("Are you sure you want to delete this appeal? This action cannot be undone.")) return;
+    
     try {
       const res = await fetch(`http://localhost:5000/api/appeals/${id}`, {
         method: "DELETE",
       });
+      
       if (!res.ok) throw new Error("Delete failed");
-      setAppeals((prev) => prev.filter((a) => (a._id || a.id) !== id));
+      
+      // Remove from state
+      setAppeals(prev => prev.filter(appeal => appeal._id !== id));
+      
     } catch (err) {
-      alert("Failed to delete");
+      alert("Failed to delete appeal");
       console.error(err);
     }
   };
+
+  // Debugging info দেখানোর জন্য
+  if (status === "authenticated" && error?.includes("not authenticated")) {
+    console.log("Debug - Session exists but error:", {
+      session: session,
+      user: session?.user,
+      email: session?.user?.email
+    });
+  }
+
+  // Show loading state
+  if (status === "loading" || loading) {
+    return (
+      <ProtectedRoute>
+        <main className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#af002b] mx-auto mb-4"></div>
+              <p>Loading your appeals...</p>
+            </div>
+          </div>
+        </main>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-6xl mx-auto px-4">
+          {/* Header */}
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h1 className="text-2xl font-bold">Manage Appeals</h1>
-            <p className="text-gray-600 mt-1">
-              View and manage appeals you created. Use the actions to view
-              details or delete an appeal.
-            </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold">Manage Your Appeals</h1>
+                <p className="text-gray-600 mt-1">
+                  View and manage appeals you created
+                </p>
+                {/* Debug info */}
+                {session?.user && (
+                  <p className="text-sm text-green-600 mt-1">
+                    Logged in as: {session.user.email}
+                  </p>
+                )}
+              </div>
+              <Link
+                href="/add-appeal"
+                className="px-4 py-2 bg-[#af002b] text-white rounded-md hover:bg-[#900023] transition-colors"
+              >
+                Create New Appeal
+              </Link>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-auto">
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-700">{error}</p>
+              {error.includes("not authenticated") && session?.user && (
+                <p className="text-sm mt-2">
+                  Session exists but authentication check failed. Please check console for details.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Appeals Table */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -108,7 +175,7 @@ export default function ManageAppealsPage() {
                     Location
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Target
+                    Target Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -119,91 +186,86 @@ export default function ManageAppealsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {loading && (
+                {appeals.length === 0 && !loading && !error ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4">
-                      Loading...
-                    </td>
-                  </tr>
-                )}
-
-                {error && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-red-600">
-                      {error}
-                    </td>
-                  </tr>
-                )}
-
-                {!loading && !error && appeals.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8">
+                    <td colSpan={5} className="px-6 py-12 text-center">
                       <div className="text-center">
-                        <div className="mx-auto w-32 h-32 rounded-full bg-[#af002b] bg-opacity-10 flex items-center justify-center mb-4">
-                          <svg
-                            className="w-12 h-12 text-[#af002b]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M3 10h4l3 8 4-16 3 8h4"
-                            />
+                        <div className="mx-auto w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          No appeals yet
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          You haven’t created any appeals. Click below to create
-                          your first one.
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No appeals found</h3>
+                        <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+                          {session?.user ? 
+                            "You haven't created any appeals yet. Start by creating your first appeal to help those in need." :
+                            "Please log in to view your appeals."
+                          }
                         </p>
-                        <div className="flex justify-center">
+                        {session?.user && (
                           <Link
                             href="/add-appeal"
-                            className="inline-block px-5 py-2 rounded-md bg-[#af002b] text-white font-medium"
+                            className="inline-flex items-center px-4 py-2 bg-[#af002b] text-white rounded-md hover:bg-[#900023] transition-colors"
                           >
-                            Create Appeal
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Your First Appeal
                           </Link>
-                        </div>
+                        )}
                       </div>
                     </td>
                   </tr>
+                ) : (
+                  appeals.map((appeal) => (
+                    <tr key={appeal._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {appeal.appealTitle || "Untitled Appeal"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {appeal.location || "Not specified"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
+                        ${(appeal.targetAmount || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          appeal.status === 'active' 
+                            ? 'bg-green-100 text-green-800'
+                            : appeal.status === 'completed'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {appeal.status || 'active'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <Link
+                            href={`/appeals/${appeal._id}`}
+                            className="px-3 py-1 bg-[#af002b] text-white rounded text-sm hover:bg-[#900023] transition-colors"
+                          >
+                            View
+                          </Link>
+                          <Link
+                            href={`/edit-appeal/${appeal._id}`}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(appeal._id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-
-                {appeals.map((a) => (
-                  <tr key={a._id || a.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {a.appealTitle || a.title || "Untitled"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {a.location || "-"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      ${a.targetAmount || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {a.status || "Active"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2 justify-end">
-                      <Link
-                        href={`/appeals/${a._id || a.id}`}
-                        className="px-3 py-1 bg-[#af002b] text-white rounded-md"
-                      >
-                        View
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(a._id || a.id)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded-md"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>

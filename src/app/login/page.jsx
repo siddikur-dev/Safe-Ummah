@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -30,6 +30,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { user, login, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get('callbackUrl') || '/';
 
   console.log("🔍 Auth user:", user);
   console.log("🔍 Auth loading:", authLoading);
@@ -37,8 +39,9 @@ export default function Login() {
   // Redirect if already logged in - শুধু যখন user আছে এবং authLoading false
   useEffect(() => {
     if (!authLoading && user) {
-      console.log("✅ Already logged in, redirecting to home...");
-      router.push('/');
+      const dest = callbackUrl || '/';
+      console.log("✅ Already logged in, redirecting to:", dest);
+      router.push(dest);
     }
   }, [user, authLoading, router]);
 
@@ -84,7 +87,7 @@ export default function Login() {
         
         // Small delay to ensure state is updated before redirect
         setTimeout(() => {
-          router.push('/');
+          router.push(callbackUrl || '/');
         }, 500);
         
       } else {
@@ -140,7 +143,7 @@ export default function Login() {
         
         // Small delay to ensure state is updated
         setTimeout(() => {
-          router.push('/');
+          router.push(callbackUrl || '/');
         }, 500);
         
       } else {

@@ -31,29 +31,31 @@ const Dashboard = () => {
 
         console.log("📦 Raw appeals data:", data);
 
-        // Filter by current user's ID or email
+        // Get current user info
         const myId = user.id || user._id;
-        const myEmail = user.email;
+        const myEmail = user.email?.toLowerCase();
         
-        const filtered = (data.appeals || data).filter((a) => {
-          const matches = 
-            a.userId === myId ||
-            a.userId === user.id ||
-            a.userId === user._id ||
-            a.creator === myId ||
-            a.email === myEmail ||
-            a.user === myId ||
-            a.userEmail === myEmail ||
-            a.creatorEmail === myEmail;
+        // Better filtering logic
+        const filtered = (data.appeals || data).filter((appeal) => {
+          // Check all possible user identification fields in appeal
+          const appealUserId = appeal.userId || appeal.user?._id || appeal.user?.id;
+          const appealUserEmail = (appeal.userEmail || appeal.email || appeal.user?.email)?.toLowerCase();
+          const appealCreator = appeal.creator || appeal.owner;
 
-          console.log(`Appeal ${a._id}:`, { 
-            title: a.appealTitle, 
-            userId: a.userId, 
-            matches,
+          console.log(`Checking appeal ${appeal._id}:`, {
+            appealUserId,
+            appealUserEmail,
+            appealCreator,
             myId,
-            myEmail 
+            myEmail
           });
 
+          // Check if any of the user identification fields match
+          const matches = 
+            (myId && (appealUserId === myId || appealCreator === myId)) ||
+            (myEmail && appealUserEmail === myEmail);
+
+          console.log(`✅ Appeal ${appeal._id} matches:`, matches);
           return matches;
         });
 
@@ -74,6 +76,62 @@ const Dashboard = () => {
     }
   }, [user, router]);
 
+  // Alternative: Backend এ directly user-specific API call করুন
+  const fetchUserAppealsFromBackend = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Backend এ user-specific endpoint থাকলে সরাসরি সেটা use করুন
+      const userId = user.id || user._id;
+      const userEmail = user.email;
+
+      // APPROACH 1: User ID দিয়ে fetch
+      const res = await fetch(`http://localhost:5000/api/appeals/user/${userId}`);
+      
+      // APPROACH 2: User Email দিয়ে fetch (যদি backend support করে)
+      // const res = await fetch(`http://localhost:5000/api/appeals/user/email/${encodeURIComponent(userEmail)}`);
+      
+      // APPROACH 3: Query parameter দিয়ে
+      // const res = await fetch(`http://localhost:5000/api/appeals?userId=${userId}`);
+
+      if (!res.ok) {
+        // যদি user-specific endpoint না থাকে, fallback to all appeals with filtering
+        console.log("User-specific endpoint not available, falling back to filtering...");
+        const fallbackRes = await fetch('http://localhost:5000/api/appeals');
+        if (!fallbackRes.ok) throw new Error(`HTTP ${fallbackRes.status}`);
+        
+        const data = await fallbackRes.json();
+        const myEmail = user.email?.toLowerCase();
+        const myId = user.id || user._id;
+        
+        const filtered = (data.appeals || data).filter(appeal => {
+          const appealUserEmail = (appeal.userEmail || appeal.email || appeal.user?.email)?.toLowerCase();
+          const appealUserId = appeal.userId || appeal.user?._id || appeal.user?.id;
+          
+          return appealUserId === myId || appealUserEmail === myEmail;
+        });
+        
+        setAppeals(filtered);
+        return;
+      }
+
+      const data = await res.json();
+      setAppeals(data.appeals || []);
+      
+    } catch (err) {
+      console.error('Failed to fetch user appeals', err);
+      setError(err.message || 'Failed to load your appeals');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this appeal? This action cannot be undone.')) return;
     try {
@@ -92,6 +150,10 @@ const Dashboard = () => {
   const handleCreateAppeal = () => {
     router.push('/add-appeal');
   };
+
+  // Debug information
+  console.log("Current user:", user);
+  console.log("Filtered appeals count:", appeals.length);
 
   // Redirect to login if not authenticated
   if (!user) {
@@ -113,6 +175,10 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600 mt-2">Welcome back, {user.name || user.email}!</p>
+            {/* Debug info */}
+            <div className="text-xs text-gray-500 mt-1">
+              User ID: {user.id || user._id} | Email: {user.email}
+            </div>
           </div>
           <button
             onClick={handleCreateAppeal}
@@ -125,7 +191,7 @@ const Dashboard = () => {
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Appeals</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Your Appeals</h3>
             <p className="text-3xl font-bold text-[#af002b]">{appeals.length}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
@@ -146,6 +212,9 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Your Appeals</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Showing {appeals.length} appeal(s) that you created
+            </p>
           </div>
 
           <div className="p-6">
